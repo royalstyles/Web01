@@ -28,7 +28,7 @@ jobs:
         with:
           host: ${{ secrets.NAS_HOST }}
           username: ${{ secrets.NAS_USER }}
-          password: ${{ secrets.NAS_PASSWORD }}
+          password: ${{ secrets.NAS_SSH_KEY }}    # ← password 대신 key 사용
           port: 22
           script: |
             cd /volume1/docker/web01
