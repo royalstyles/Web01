@@ -1,34 +1,28 @@
 name: Web01 CI/CD
-
 on:
   push:
     branches: [ master ]
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
-
       - name: Tailscale 연결
         uses: tailscale/github-action@v2
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-
       - name: Docker 이미지 빌드 & Push
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker build -t royalstyles/web01:latest .
           docker push royalstyles/web01:latest
-
       - name: NAS 배포
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.NAS_HOST }}
           username: ${{ secrets.NAS_USER }}
-          password: ${{ secrets.NAS_SSH_KEY }}    # ← password 대신 key 사용
+          key: ${{ secrets.NAS_SSH_KEY }}
           port: 22
           script: |
             cd /volume1/docker/web01
