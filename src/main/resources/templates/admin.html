@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+        .navbar { background: #4f46e5; color: white; padding: 14px 32px;
+            display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: white; text-decoration: none; }
+        .content { max-width: 900px; margin: 40px auto; }
+        table { width: 100%; border-collapse: collapse; background: white;
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+        th { background: #4f46e5; color: white; padding: 14px; text-align: left; }
+        td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; }
+        tr:last-child td { border-bottom: none; }
+        .badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .admin { background: #fef3c7; color: #d97706; }
+        .user  { background: #dbeafe; color: #2563eb; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <span>👑 관리자 페이지</span>
+    <a th:href="@{/home}">← 홈으로</a>
+</nav>
+<div class="content">
+    <h2 style="margin-bottom:20px;">전체 회원 목록</h2>
+    <table>
+        <thead>
+        <tr><th>ID</th><th>아이디</th><th>이메일</th><th>권한</th><th>가입일시</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="user : ${users}">
+            <td th:text="${user.id}"></td>
+            <td th:text="${user.username}"></td>
+            <td th:text="${user.email}"></td>
+            <td>
+                    <span th:class="${user.role.name() == 'ROLE_ADMIN'} ? 'badge admin' : 'badge user'"
+                          th:text="${user.role.name() == 'ROLE_ADMIN'} ? '관리자' : '일반'"></span>
+            </td>
+            <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

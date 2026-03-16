@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>홈</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+        .navbar { background: #4f46e5; color: white; padding: 14px 32px;
+            display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: white; text-decoration: none; margin-left: 16px; }
+        .content { max-width: 800px; margin: 60px auto; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 13px; font-weight: bold; margin-top: 8px; }
+        .admin-badge { background: #fef3c7; color: #d97706; }
+        .user-badge  { background: #dbeafe; color: #2563eb; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <span>🏠 Web01</span>
+    <div>
+        <a th:if="${isAdmin}" th:href="@{/admin}">👑 관리자</a>
+        <a th:href="@{/auth/logout}">로그아웃</a>
+    </div>
+</nav>
+<div class="content">
+    <div class="card">
+        <h2>안녕하세요, <span th:text="${username}"></span>님! 👋</h2>
+        <span th:if="${isAdmin}"  class="badge admin-badge">관리자</span>
+        <span th:unless="${isAdmin}" class="badge user-badge">일반 회원</span>
+        <p style="margin-top:20px; color:#666;">로그인에 성공했습니다.</p>
+    </div>
+</div>
+</body>
+</html>
