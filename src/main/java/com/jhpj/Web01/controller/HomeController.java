@@ -25,12 +25,4 @@ public class HomeController {
                         .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
         return "home";
     }
-
-    /** 관리자: 전체 회원 목록 */
-    @GetMapping("/admin")
-    public String admin(Model model) {
-        List<User> users = userRepository.findAll();
-        model.addAttribute("users", users);
-        return "admin";
-    }
 }

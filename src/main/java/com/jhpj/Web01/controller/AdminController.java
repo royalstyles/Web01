@@ -1,0 +1,110 @@
+package com.jhpj.Web01.controller;
+
+import com.jhpj.Web01.entity.User;
+import com.jhpj.Web01.repository.UserRepository;
+import com.jhpj.Web01.service.AdminService;
+import com.jhpj.Web01.service.LoginAttemptService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Controller
+@RequestMapping("/admin")
+@RequiredArgsConstructor
+public class AdminController {
+
+    private final UserRepository userRepository;
+    private final AdminService adminService;
+    private final LoginAttemptService loginAttemptService;
+
+    /** 대시보드 */
+    @GetMapping
+    public String dashboard(Model model,
+                            @AuthenticationPrincipal UserDetails currentUser) {
+
+        List<User> users = userRepository.findAll();
+
+        // ── 통계 ──────────────────────────────────────────
+        long totalUsers     = users.size();
+        long adminCount     = users.stream().filter(u -> u.getRole() == User.Role.ROLE_ADMIN).count();
+        long unverifiedCount= users.stream().filter(u -> !u.isEmailVerified()).count();
+        long lockedCount    = users.stream().filter(u -> loginAttemptService.isBlocked(u.getUsername())).count();
+
+        // ── 잠금된 userId Set (Thymeleaf 조건 렌더링용) ──
+        Set<Long> lockedIds = users.stream()
+                .filter(u -> loginAttemptService.isBlocked(u.getUsername()))
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        model.addAttribute("users",           users);
+        model.addAttribute("totalUsers",      totalUsers);
+        model.addAttribute("adminCount",      adminCount);
+        model.addAttribute("unverifiedCount", unverifiedCount);
+        model.addAttribute("lockedCount",     lockedCount);
+        model.addAttribute("lockedIds",       lockedIds);
+        model.addAttribute("currentUsername", currentUser.getUsername());
+
+        return "admin";
+    }
+
+    /** 권한 변경 */
+    @PostMapping("/users/{id}/role")
+    public String toggleRole(@PathVariable Long id,
+                             @AuthenticationPrincipal UserDetails currentUser,
+                             RedirectAttributes ra) {
+        guardSelf(id, currentUser, ra, "자신의 권한은 변경할 수 없습니다.");
+        if (ra.getFlashAttributes().containsKey("errorMsg")) return "redirect:/admin";
+
+        adminService.toggleRole(id);
+        ra.addFlashAttribute("successMsg", "권한이 변경되었습니다.");
+        return "redirect:/admin";
+    }
+
+    /** 회원 삭제 */
+    @PostMapping("/users/{id}/delete")
+    public String deleteUser(@PathVariable Long id,
+                             @AuthenticationPrincipal UserDetails currentUser,
+                             RedirectAttributes ra) {
+        guardSelf(id, currentUser, ra, "자신의 계정은 삭제할 수 없습니다.");
+        if (ra.getFlashAttributes().containsKey("errorMsg")) return "redirect:/admin";
+
+        adminService.deleteUser(id);
+        ra.addFlashAttribute("successMsg", "회원이 삭제되었습니다.");
+        return "redirect:/admin";
+    }
+
+    /** 계정 잠금 해제 */
+    @PostMapping("/users/{id}/unlock")
+    public String unlockUser(@PathVariable Long id, RedirectAttributes ra) {
+        adminService.unlockUser(id);
+        ra.addFlashAttribute("successMsg", "계정 잠금이 해제되었습니다.");
+        return "redirect:/admin";
+    }
+
+    /** 이메일 인증 강제 완료 */
+    @PostMapping("/users/{id}/verify")
+    public String forceVerify(@PathVariable Long id, RedirectAttributes ra) {
+        adminService.forceVerify(id);
+        ra.addFlashAttribute("successMsg", "이메일 인증이 완료 처리되었습니다.");
+        return "redirect:/admin";
+    }
+
+    // ── 내부 헬퍼 ─────────────────────────────────────────
+    private void guardSelf(Long targetId, UserDetails currentUser,
+                           RedirectAttributes ra, String msg) {
+        userRepository.findByUsername(currentUser.getUsername())
+                .ifPresent(me -> {
+                    if (me.getId().equals(targetId)) {
+                        ra.addFlashAttribute("errorMsg", msg);
+                    }
+                });
+    }
+}
