@@ -54,6 +54,10 @@
     <div th:if="${param.locked}" class="msg error">
         로그인 시도 횟수 초과로 계정이 잠겼습니다. 잠시 후 다시 시도해주세요.
     </div>
+
+    <div th:if="${param.unverified}" class="msg error">
+        이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.
+    </div>
 </div>
 </body>
 </html>

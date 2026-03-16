@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authentication.DisabledException;
 
 @Configuration
 @EnableWebSecurity
@@ -38,7 +39,6 @@ public class SecurityConfig {
                         .loginPage("/auth/login")           // 커스텀 로그인 페이지
                         .loginProcessingUrl("/auth/login")  // POST 처리 URL
                         .defaultSuccessUrl("/home", true)
-                        .failureUrl("/auth/login?error=true")
                         // ✅ 성공 핸들러 — 실패 기록 초기화
                         .successHandler((request, response, authentication) -> {
                             loginAttemptService.loginSucceeded(authentication.getName());
@@ -48,10 +48,16 @@ public class SecurityConfig {
                         .failureHandler((request, response, exception) -> {
                             String username = request.getParameter("username");
                             loginAttemptService.loginFailed(username);
-                            String msg = exception.getMessage().contains("잠겼습니다")
-                                    ? "?locked=true"
-                                    : "?error=true";
-                            response.sendRedirect("/auth/login" + msg);
+
+                            String redirect;
+                            if (exception instanceof DisabledException) {
+                                redirect = "/auth/login?unverified=true";
+                            } else if (exception.getMessage() != null && exception.getMessage().contains("잠겼습니다")) {
+                                redirect = "/auth/login?locked=true";
+                            } else {
+                                redirect = "/auth/login?error=true";
+                            }
+                            response.sendRedirect(redirect);
                         })
                         .permitAll()
                 )

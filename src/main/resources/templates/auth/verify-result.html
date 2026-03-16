@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><title>이메일 인증</title>
+    <style>
+        body { font-family:'Segoe UI',sans-serif; background:#f0f2f5;
+            display:flex; justify-content:center; align-items:center; height:100vh; }
+        .card { background:white; padding:40px; border-radius:12px;
+            box-shadow:0 4px 20px rgba(0,0,0,.1); width:360px; text-align:center; }
+        .icon { font-size:48px; margin-bottom:16px; }
+        .btn  { display:inline-block; margin-top:20px; padding:12px 32px;
+            background:#4f46e5; color:white; text-decoration:none;
+            border-radius:8px; font-size:15px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="icon" th:text="${success} ? '✅' : '❌'"></div>
+    <p th:text="${msg}" style="color:#444; font-size:16px;"></p>
+    <a th:href="@{/auth/login}" class="btn">로그인 페이지로</a>
+</div>
+</body>
+</html>

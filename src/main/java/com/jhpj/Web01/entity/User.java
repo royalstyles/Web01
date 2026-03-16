@@ -40,6 +40,9 @@ public class User implements UserDetails {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(nullable = false, columnDefinition = "number(1,0) default 0 not null")
+    private boolean emailVerified = false;
+
     // ── UserDetails 구현 ──────────────────────────
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -49,7 +52,7 @@ public class User implements UserDetails {
     @Override public boolean isAccountNonExpired()    { return true; }
     @Override public boolean isAccountNonLocked()     { return true; }
     @Override public boolean isCredentialsNonExpired(){ return true; }
-    @Override public boolean isEnabled()              { return true; }
+    @Override public boolean isEnabled() { return emailVerified; }
 
     public enum Role {
         ROLE_USER, ROLE_ADMIN
