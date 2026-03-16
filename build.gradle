@@ -10,7 +10,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(23)
 	}
 }
 
@@ -70,6 +70,11 @@ dependencies {
 
 	// PDF BOX
 	implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+
+	// ✅ 추가 필요
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
 //	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 
