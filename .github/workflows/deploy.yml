@@ -25,6 +25,6 @@ jobs:
           key: ${{ secrets.NAS_SSH_KEY }}
           port: 22
           script: |
-            cd /volume1/docker/web01
+            cd ./volume1/docker/web01
             docker compose pull
             docker compose up -d
