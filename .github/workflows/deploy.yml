@@ -22,9 +22,10 @@ jobs:
         with:
           host: ${{ secrets.NAS_HOST }}
           username: ${{ secrets.NAS_USER }}
-          key: ${{ secrets.NAS_SSH_KEY }}
+          password: ${{ secrets.NAS_PASSWORD }}
+          #key: ${{ secrets.NAS_SSH_KEY }}
           port: 22
           script: |
-            cd ./volume1/docker/web01
+            cd /volume1/docker/spring
             docker compose pull
             docker compose up -d
