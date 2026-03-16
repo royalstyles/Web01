@@ -50,6 +50,10 @@
     <div class="link">
         계정이 없으신가요? <a th:href="@{/auth/signup}">회원가입</a>
     </div>
+
+    <div th:if="${param.locked}" class="msg error">
+        로그인 시도 횟수 초과로 계정이 잠겼습니다. 잠시 후 다시 시도해주세요.
+    </div>
 </div>
 </body>
 </html>

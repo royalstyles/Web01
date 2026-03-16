@@ -34,10 +34,11 @@ public class AuthController {
     @PostMapping("/signup")
     public String signup(@RequestParam String username,
                          @RequestParam String password,
+                         @RequestParam String confirmPassword, // ✅ 추가
                          @RequestParam String email,
                          RedirectAttributes redirectAttributes) {
         try {
-            userDetailsService.register(username, password, email);
+            userDetailsService.register(username, password, confirmPassword, email);
             redirectAttributes.addFlashAttribute("successMsg", "회원가입이 완료되었습니다. 로그인하세요.");
             return "redirect:/auth/login";
         } catch (IllegalArgumentException e) {

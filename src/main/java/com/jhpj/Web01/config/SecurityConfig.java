@@ -1,6 +1,7 @@
 package com.jhpj.Web01.config;
 
 import com.jhpj.Web01.service.CustomUserDetailsService;
+import com.jhpj.Web01.service.LoginAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,6 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
+    private final LoginAttemptService loginAttemptService; // ✅ 추가
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -37,6 +39,20 @@ public class SecurityConfig {
                         .loginProcessingUrl("/auth/login")  // POST 처리 URL
                         .defaultSuccessUrl("/home", true)
                         .failureUrl("/auth/login?error=true")
+                        // ✅ 성공 핸들러 — 실패 기록 초기화
+                        .successHandler((request, response, authentication) -> {
+                            loginAttemptService.loginSucceeded(authentication.getName());
+                            response.sendRedirect("/home");
+                        })
+                        // ✅ 실패 핸들러 — 실패 횟수 기록
+                        .failureHandler((request, response, exception) -> {
+                            String username = request.getParameter("username");
+                            loginAttemptService.loginFailed(username);
+                            String msg = exception.getMessage().contains("잠겼습니다")
+                                    ? "?locked=true"
+                                    : "?error=true";
+                            response.sendRedirect("/auth/login" + msg);
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout
