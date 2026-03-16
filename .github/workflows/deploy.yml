@@ -22,8 +22,8 @@ jobs:
         with:
           host: ${{ secrets.NAS_HOST }}
           username: ${{ secrets.NAS_USER }}
-          password: ${{ secrets.NAS_PASSWORD }}
-          #key: ${{ secrets.NAS_SSH_KEY }}
+          #password: ${{ secrets.NAS_PASSWORD }}
+          key: ${{ secrets.NAS_SSH_KEY }} # SSH key 방식으로 변경
           port: 22
           script: |
             cd /volume1/docker/spring
