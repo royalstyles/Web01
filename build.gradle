@@ -9,9 +9,14 @@ group = 'com.jhpj'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(23)
-	}
+	// 아래 블록 전체 삭제
+	// toolchain {
+	//     languageVersion = JavaLanguageVersion.of(23)
+	// }
+
+	// 이걸로 교체
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
 }
 
 configurations {
