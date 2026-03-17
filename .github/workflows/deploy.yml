@@ -17,6 +17,19 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker build -t royalstyles/web01:latest .
           docker push royalstyles/web01:latest
+      - name: NAS에 secret 파일 생성
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.NAS_HOST }}
+          username: ${{ secrets.NAS_USER }}
+          key: ${{ secrets.NAS_SSH_KEY }}
+          port: 22
+          script: |
+            mkdir -p /volume1/docker/spring/secret
+            cat > /volume1/docker/spring/secret/application-secret.properties << 'EOF'
+            spring.datasource.password=${{ secrets.DB_PASSWORD }}
+            spring.mail.password=${{ secrets.MAIL_PASSWORD }}
+            EOF
       - name: NAS 배포
         uses: appleboy/ssh-action@v1
         with:
