@@ -31,6 +31,10 @@ public class HomeController {
                 userDetails.getAuthorities().stream()
                         .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
 
+        // 프로필 이미지
+        userRepository.findByUsername(userDetails.getUsername())
+                .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));
+
         // 게시판 데이터
         Page<Post> postPage = boardService.getPostList(categoryId, keyword, page);
         model.addAttribute("posts",       postPage.getContent());

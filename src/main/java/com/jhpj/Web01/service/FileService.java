@@ -48,7 +48,7 @@ public class FileService {
     private static final long MAX_VIDEO_SIZE = 500L * 1024 * 1024;
 
     /**
-     * 파일 업로드 — DB 저장 후 PostFile 반환
+     * 게시글용 파일 업로드 — DB 저장 후 PostFile 반환
      * post는 null로 저장 (게시글 저장 시 attachToPost 호출로 연결)
      */
     @Transactional
@@ -92,6 +92,58 @@ public class FileService {
     }
 
     /**
+     * 프로필 이미지 업로드 — /uploads/profiles/ 에 저장
+     */
+    @Transactional
+    public PostFile uploadProfileImage(MultipartFile file, User uploader) throws IOException {
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("이미지 파일(jpg, png, gif, webp)만 업로드 가능합니다.");
+        }
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            throw new IllegalArgumentException("이미지 크기는 20MB 이하여야 합니다.");
+        }
+
+        Path dir = Paths.get(uploadPath, "profiles");
+        Files.createDirectories(dir);
+
+        String originalName = file.getOriginalFilename();
+        String ext = getExtension(originalName);
+        String storedName = UUID.randomUUID() + (ext.isEmpty() ? "" : "." + ext);
+
+        Path filePath = dir.resolve(storedName);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        String fileUrl = urlPrefix + "/profiles/" + storedName;
+
+        return postFileRepository.save(PostFile.builder()
+                .post(null)
+                .uploader(uploader)
+                .originalName(originalName != null ? originalName : storedName)
+                .storedName(storedName)
+                .filePath(filePath.toAbsolutePath().toString())
+                .fileUrl(fileUrl)
+                .contentType(contentType)
+                .fileSize(file.getSize())
+                .fileType(PostFile.FileType.IMAGE)
+                .build());
+    }
+
+    /**
+     * 프로필 이미지 삭제 — 디스크 + DB
+     */
+    public void deleteProfileImage(String storedName) {
+        postFileRepository.findByStoredName(storedName).ifPresent(pf -> {
+            try {
+                Files.deleteIfExists(Paths.get(pf.getFilePath()));
+            } catch (IOException e) {
+                log.warn("프로필 이미지 디스크 삭제 실패: {}", pf.getFilePath(), e);
+            }
+            postFileRepository.delete(pf);
+        });
+    }
+
+    /**
      * 파일 삭제 — 디스크 + DB 동시 삭제
      */
     @Transactional
@@ -124,6 +176,7 @@ public class FileService {
 
     /**
      * 고아 파일 정리 스케줄러 — 매 1시간마다 POST_ID가 없는 임시 파일 삭제
+     * profiles/ 디렉토리 파일은 제외 (post가 null이어도 영구 보관)
      */
     @Scheduled(fixedDelay = 60 * 60 * 1000)
     @Transactional
@@ -131,19 +184,18 @@ public class FileService {
         LocalDateTime before = LocalDateTime.now().minusHours(1);
         List<PostFile> orphans = postFileRepository.findOrphanFiles(before);
 
-        orphans.forEach(pf -> {
-            try {
-                Files.deleteIfExists(Paths.get(pf.getFilePath()));
-                log.info("고아 파일 삭제: {}", pf.getStoredName());
-            } catch (IOException e) {
-                log.warn("고아 파일 디스크 삭제 실패: {}", pf.getFilePath(), e);
-            }
-            postFileRepository.delete(pf);
-        });
-
-        if (!orphans.isEmpty()) {
-            log.info("고아 파일 정리 완료: {}개", orphans.size());
-        }
+        // 프로필 이미지는 고아 정리 대상에서 제외
+        orphans.stream()
+                .filter(pf -> !pf.getFilePath().contains("/profiles/"))
+                .forEach(pf -> {
+                    try {
+                        Files.deleteIfExists(Paths.get(pf.getFilePath()));
+                        log.info("고아 파일 삭제: {}", pf.getStoredName());
+                    } catch (IOException e) {
+                        log.warn("고아 파일 디스크 삭제 실패: {}", pf.getFilePath(), e);
+                    }
+                    postFileRepository.delete(pf);
+                });
     }
 
     // ── 내부 헬퍼 ────────────────────────────────────────────

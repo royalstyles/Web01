@@ -45,14 +45,60 @@
             box-shadow: 0 2px 12px rgba(0,0,0,.06);
             margin-bottom: 24px;
         }
+
+        /* 아바타 래퍼 */
+        .avatar-wrap {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
         .avatar-ring {
             width: 80px; height: 80px;
             border-radius: 50%;
             background: linear-gradient(135deg, #4f46e5, #818cf8);
             display: flex; align-items: center; justify-content: center;
             font-size: 32px; font-weight: 700; color: white;
-            margin: 0 auto 16px;
         }
+        .avatar-img {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #4f46e5;
+            display: block;
+        }
+
+        /* 카메라 오버레이 버튼 */
+        .avatar-edit-label {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #4f46e5;
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            border: 2px solid white;
+            transition: background .2s;
+        }
+        .avatar-edit-label:hover { background: #4338ca; }
+
+        /* 이미지 삭제 버튼 */
+        .btn-img-delete {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 3px 12px;
+            background: none;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .15s;
+            font-family: inherit;
+        }
+        .btn-img-delete:hover { background: #fee2e2; }
+
         .profile-name { font-size: 22px; font-weight: 700; color: #1e1b4b; }
         .profile-email { font-size: 14px; color: #6b7280; margin-top: 4px; }
         .profile-badge {
@@ -102,7 +148,6 @@
         .form-group { margin-bottom: 16px; }
         label { display: block; margin-bottom: 6px; font-size: 13px;
             color: #6b7280; font-weight: 500; }
-        .input-wrap { position: relative; }
         input[type="text"],
         input[type="email"],
         input[type="password"] {
@@ -132,6 +177,7 @@
             padding: 10px 24px; border: none; border-radius: 8px;
             font-size: 14px; font-weight: 600; cursor: pointer;
             transition: opacity .15s, transform .1s;
+            font-family: inherit;
         }
         .btn:hover { opacity: .88; transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
@@ -189,9 +235,37 @@
 
     <!-- 프로필 헤더 -->
     <div class="profile-header">
-        <div class="avatar-ring"
-             th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">A</div>
-        <div class="profile-name" th:text="${user.username}">username</div>
+
+        <!-- 아바타 + 카메라 버튼 -->
+        <div class="avatar-wrap">
+
+            <!-- 이미지 없음: 이니셜 -->
+            <div class="avatar-ring"
+                 th:unless="${user.profileImage != null}"
+                 th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">A</div>
+
+            <!-- 이미지 있음 -->
+            <img th:if="${user.profileImage != null}"
+                 th:src="${user.profileImage}"
+                 class="avatar-img"
+                 alt="프로필 이미지"/>
+
+            <!-- 카메라 오버레이 (파일 선택 트리거) -->
+            <label class="avatar-edit-label" for="profile-image-input" title="이미지 변경">📷</label>
+            <input id="profile-image-input" type="file" accept="image/*"
+                   style="display:none;" onchange="submitProfileImage(this)"/>
+        </div>
+
+        <!-- 이미지 삭제 버튼 (이미지 있을 때만) -->
+        <div th:if="${user.profileImage != null}">
+            <form th:action="@{/profile/image/delete}" method="post"
+                  onsubmit="return confirm('프로필 이미지를 삭제하시겠습니까?');">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="btn-img-delete">🗑 이미지 삭제</button>
+            </form>
+        </div>
+
+        <div class="profile-name" th:text="${user.username}" style="margin-top:8px;">username</div>
         <div class="profile-email" th:text="${user.email}">email</div>
         <span th:class="${user.role.name() == 'ROLE_ADMIN'} ? 'profile-badge badge-admin' : 'profile-badge badge-user'"
               th:text="${user.role.name() == 'ROLE_ADMIN'} ? '👑 관리자' : '👤 일반 회원'"></span>
@@ -283,7 +357,38 @@
 
 </div>
 
-<script>
+<script th:inline="javascript">
+    const csrfParam = /*[[${_csrf.parameterName}]]*/ '_csrf';
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+
+    // 프로필 이미지 선택 즉시 폼 제출
+    function submitProfileImage(input) {
+        if (!input.files[0]) return;
+
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/profile/image';
+        form.enctype = 'multipart/form-data';
+
+        const csrf = document.createElement('input');
+        csrf.type  = 'hidden';
+        csrf.name  = csrfParam;
+        csrf.value = csrfToken;
+        form.appendChild(csrf);
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.name = 'profileImage';
+        const dt = new DataTransfer();
+        dt.items.add(input.files[0]);
+        fileInput.files = dt.files;
+        form.appendChild(fileInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // 비밀번호 강도 표시
     function checkStrength(pw) {
         const fill = document.getElementById('strengthFill');
         const hint = document.getElementById('strengthHint');

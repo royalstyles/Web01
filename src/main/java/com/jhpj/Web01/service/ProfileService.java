@@ -1,6 +1,7 @@
 package com.jhpj.Web01.service;
 
 import com.jhpj.Web01.entity.EmailChangeToken;
+import com.jhpj.Web01.entity.PostFile;
 import com.jhpj.Web01.entity.User;
 import com.jhpj.Web01.repository.EmailChangeTokenRepository;
 import com.jhpj.Web01.repository.UserRepository;
@@ -9,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -21,10 +24,46 @@ public class ProfileService {
     private final EmailChangeTokenRepository emailChangeTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final FileService fileService;
 
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
+    /** 프로필 이미지 변경 */
+    @Transactional
+    public void updateProfileImage(String username, MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("이미지 파일을 선택해주세요.");
+        }
+
+        User user = findByUsername(username);
+
+        // 기존 이미지 삭제
+        if (user.getProfileImage() != null) {
+            String oldStoredName = user.getProfileImage()
+                    .replaceAll(".*/profiles/", "");
+            fileService.deleteProfileImage(oldStoredName);
+        }
+
+        PostFile saved = fileService.uploadProfileImage(file, user);
+        user.setProfileImage(saved.getFileUrl());
+        userRepository.save(user);
+    }
+
+    /** 프로필 이미지 삭제 */
+    @Transactional
+    public void deleteProfileImage(String username) {
+        User user = findByUsername(username);
+        if (user.getProfileImage() == null) {
+            throw new IllegalArgumentException("등록된 프로필 이미지가 없습니다.");
+        }
+        String oldStoredName = user.getProfileImage()
+                .replaceAll(".*/profiles/", "");
+        fileService.deleteProfileImage(oldStoredName);
+        user.setProfileImage(null);
+        userRepository.save(user);
     }
 
     /** 아이디(username) 변경 */

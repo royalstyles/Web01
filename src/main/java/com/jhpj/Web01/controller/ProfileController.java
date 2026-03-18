@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -22,6 +23,33 @@ public class ProfileController {
     public String profilePage(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("user", profileService.findByUsername(userDetails.getUsername()));
         return "profile";
+    }
+
+    /** 프로필 이미지 업로드 */
+    @PostMapping("/image")
+    public String updateProfileImage(@AuthenticationPrincipal UserDetails userDetails,
+                                     @RequestParam MultipartFile profileImage,
+                                     RedirectAttributes ra) {
+        try {
+            profileService.updateProfileImage(userDetails.getUsername(), profileImage);
+            ra.addFlashAttribute("successMsg", "프로필 이미지가 변경되었습니다.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/profile";
+    }
+
+    /** 프로필 이미지 삭제 */
+    @PostMapping("/image/delete")
+    public String deleteProfileImage(@AuthenticationPrincipal UserDetails userDetails,
+                                     RedirectAttributes ra) {
+        try {
+            profileService.deleteProfileImage(userDetails.getUsername());
+            ra.addFlashAttribute("successMsg", "프로필 이미지가 삭제되었습니다.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/profile";
     }
 
     /** 닉네임(아이디) 변경 */

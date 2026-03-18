@@ -60,8 +60,8 @@
             margin-right: 4px;
         }
         .user-avatar {
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: rgba(255,255,255,.3);
             display: flex;
@@ -70,6 +70,8 @@
             font-size: 12px;
             font-weight: 700;
             color: white;
+            overflow: hidden;
+            flex-shrink: 0;
         }
         .user-info-text {
             display: flex;
@@ -338,8 +340,14 @@
     <div class="navbar-right">
         <!-- 내 정보 칩 -->
         <div class="user-chip">
-            <div class="user-avatar"
-                 th:text="${#strings.substring(username, 0, 1).toUpperCase()}">A</div>
+            <div class="user-avatar">
+                <img th:if="${profileImage != null}"
+                     th:src="${profileImage}"
+                     style="width:100%; height:100%; object-fit:cover;"
+                     alt="프로필"/>
+                <span th:unless="${profileImage != null}"
+                      th:text="${#strings.substring(username, 0, 1).toUpperCase()}"></span>
+            </div>
             <div class="user-info-text">
                 <span class="user-name" th:text="${username}">username</span>
                 <span class="user-role" th:text="${isAdmin} ? '관리자' : '일반 회원'">일반 회원</span>

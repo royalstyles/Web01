@@ -43,6 +43,10 @@ public class User implements UserDetails {
     @Column(nullable = false, columnDefinition = "number(1,0) default 0 not null")
     private boolean emailVerified = false;
 
+    /** 프로필 이미지 URL (/uploads/profiles/uuid.jpg) */
+    @Column(length = 500)
+    private String profileImage;
+
     // ── UserDetails 구현 ──────────────────────────
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
