@@ -29,19 +29,24 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // 비인증 허용 (홈, 게시글 목록/상세 공개)
-                        .requestMatchers(
-                                "/auth/**", "/css/**", "/js/**", "/uploads/**",
-                                "/", "/home", "/board", "/board/{id:[0-9]+}"
-                        ).permitAll()
+                        // 1. 인증 필요 경로 먼저 (구체적인 것 우선)
                         // 관리자 전용
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // 게시글 작성/수정/삭제/댓글/좋아요/파일업로드 — 로그인 필수
                         .requestMatchers(
                                 "/board/write", "/board/*/edit", "/board/*/delete",
                                 "/board/*/comments", "/board/comments/**",
-                                "/board/*/like", "/api/upload/**"
+                                "/board/*/like", "/api/upload/**",
+                                "/profile/**"
                         ).authenticated()
+
+                        // 2. 공개 허용
+                        // 비인증 허용 (홈, 게시글 목록/상세 공개)
+                        .requestMatchers(
+                                "/auth/**", "/css/**", "/js/**", "/uploads/**",
+                                "/", "/home", "/board/**"
+                        ).permitAll()
+
                         // 나머지 전부 로그인 필요
                         .anyRequest().authenticated()
                 )

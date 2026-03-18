@@ -77,20 +77,28 @@ public class BoardController {
                        @AuthenticationPrincipal UserDetails userDetails,
                        Model model) {
 
-        Post post = boardService.getPost(postId);           // 조회수 증가
+        Post post = boardService.getPost(postId);
         List<Comment> comments = boardService.getComments(postId);
-        boolean liked = boardService.isLiked(postId, userDetails.getUsername());
 
         model.addAttribute("post",     post);
         model.addAttribute("comments", comments);
-        model.addAttribute("liked",    liked);
-        model.addAttribute("currentUsername", userDetails.getUsername());
 
-        // 수정/삭제 버튼 표시 여부
-        boolean isAuthor = post.getAuthor().getUsername().equals(userDetails.getUsername());
-        boolean isAdmin  = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        model.addAttribute("canEdit", isAuthor || isAdmin);
+        if (userDetails != null) {
+            boolean liked = boardService.isLiked(postId, userDetails.getUsername());
+            model.addAttribute("liked",    liked);
+            model.addAttribute("currentUsername", userDetails.getUsername());
+
+            boolean isAuthor = post.getAuthor().getUsername().equals(userDetails.getUsername());
+            boolean isAdmin  = userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            model.addAttribute("canEdit", isAuthor || isAdmin);
+            model.addAttribute("isLoggedIn", true);
+        } else {
+            model.addAttribute("liked",           false);
+            model.addAttribute("currentUsername", "");
+            model.addAttribute("canEdit",         false);
+            model.addAttribute("isLoggedIn",      false);
+        }
 
         return "board/board-view";
     }
