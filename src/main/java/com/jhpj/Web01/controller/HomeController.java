@@ -19,6 +19,11 @@ public class HomeController {
     private final UserRepository userRepository;
     private final BoardService boardService;
 
+    @GetMapping("/")
+    public String root() {
+        return "redirect:/home";
+    }
+
     @GetMapping("/home")
     public String home(@AuthenticationPrincipal UserDetails userDetails,
                        @RequestParam(required = false) Long categoryId,
