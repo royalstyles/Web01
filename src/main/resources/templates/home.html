@@ -22,7 +22,9 @@
 <body>
 <nav class="navbar">
     <span>🏠 Web01</span>
+
     <div>
+        <a th:href="@{/profile}">⚙️ 프로필</a>
         <a th:if="${isAdmin}" th:href="@{/admin}">👑 관리자</a>
         <form th:action="@{/auth/logout}" method="post" style="display:inline;">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
