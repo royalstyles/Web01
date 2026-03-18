@@ -43,14 +43,6 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-//	// DB
-//	runtimeOnly 'com.h2database:h2'
-//	implementation 'org.mariadb.jdbc:mariadb-java-client:3.1.4'
-//	// MyBatis
-//	implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.2")
-//	// log4j
-//	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
-
 	// poi
 	implementation 'org.apache.poi:poi:5.2.0'
 	implementation 'org.apache.poi:poi-ooxml:5.2.0'
@@ -81,7 +73,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
-//	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	// Flyway 방식 추가
+	implementation 'org.flywaydb:flyway-core'
+	// Oracle 지원을 위해 추가 필요
+	implementation 'org.flywaydb:flyway-database-oracle'
+
 
 }
 
