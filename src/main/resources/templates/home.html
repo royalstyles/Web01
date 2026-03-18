@@ -338,29 +338,39 @@
     </a>
 
     <div class="navbar-right">
-        <!-- 내 정보 칩 -->
-        <div class="user-chip">
-            <div class="user-avatar">
-                <img th:if="${profileImage != null}"
-                     th:src="${profileImage}"
-                     style="width:100%; height:100%; object-fit:cover;"
-                     alt="프로필"/>
-                <span th:unless="${profileImage != null}"
-                      th:text="${#strings.substring(username, 0, 1).toUpperCase()}"></span>
+        <!-- ── 로그인 상태 ── -->
+        <th:block th:if="${isLoggedIn}">
+            <!-- 내 정보 칩 -->
+            <div class="user-chip">
+                <div class="user-avatar">
+                    <img th:if="${profileImage != null}"
+                         th:src="${profileImage}"
+                         style="width:100%; height:100%; object-fit:cover;"
+                         alt="프로필"/>
+                    <span th:unless="${profileImage != null}"
+                          th:text="${#strings.substring(username, 0, 1).toUpperCase()}"></span>
+                </div>
+                <div class="user-info-text">
+                    <span class="user-name" th:text="${username}">username</span>
+                    <span class="user-role" th:text="${isAdmin} ? '관리자' : '일반 회원'">일반 회원</span>
+                </div>
             </div>
-            <div class="user-info-text">
-                <span class="user-name" th:text="${username}">username</span>
-                <span class="user-role" th:text="${isAdmin} ? '관리자' : '일반 회원'">일반 회원</span>
-            </div>
-        </div>
 
-        <a th:href="@{/profile}" class="nav-btn">⚙️ 프로필</a>
-        <a th:if="${isAdmin}" th:href="@{/admin}" class="nav-btn">👑 관리자</a>
+            <a th:href="@{/profile}" class="nav-btn">⚙️ 프로필</a>
+            <a th:if="${isAdmin}" th:href="@{/admin}" class="nav-btn">👑 관리자</a>
 
-        <form th:action="@{/auth/logout}" method="post" style="display:inline;">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <button type="submit" class="nav-logout-btn">로그아웃</button>
-        </form>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="nav-logout-btn">로그아웃</button>
+            </form>
+        </th:block>
+
+        <!-- ── 비로그인 상태 ── -->
+        <th:block th:unless="${isLoggedIn}">
+            <a th:href="@{/auth/login}"  class="nav-btn">로그인</a>
+            <a th:href="@{/auth/signup}" class="nav-btn">회원가입</a>
+        </th:block>
+
     </div>
 </nav>
 
@@ -372,7 +382,8 @@
     <!-- 게시판 헤더 -->
     <div class="board-header">
         <h1>📋 게시판</h1>
-        <a th:href="@{/board/write}" class="btn-write">✏️ 글쓰기</a>
+        <!-- 로그인 시 바로 이동, 비로그인 시 로그인 페이지로 -->
+        <a th:href="${isLoggedIn} ? @{/board/write} : @{/auth/login}" class="btn-write">✏️ 글쓰기</a>
     </div>
 
     <!-- 카테고리 필터 + 검색 -->

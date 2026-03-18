@@ -31,16 +31,22 @@ public class HomeController {
                        @RequestParam(defaultValue = "0") int page,
                        Model model) {
 
-        model.addAttribute("username", userDetails.getUsername());
-        model.addAttribute("isAdmin",
-                userDetails.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+        // ── 로그인 여부에 따라 분기 ──────────────────────────
+        if (userDetails != null) {
+            model.addAttribute("isLoggedIn", true);
+            model.addAttribute("username", userDetails.getUsername());
+            model.addAttribute("isAdmin",
+                    userDetails.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
 
-        // 프로필 이미지
-        userRepository.findByUsername(userDetails.getUsername())
-                .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));
+            // 프로필 이미지
+            userRepository.findByUsername(userDetails.getUsername())
+                    .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));
+        } else {
+            model.addAttribute("isLoggedIn", false);
+        }
 
-        // 게시판 데이터
+        // ── 게시판 데이터 (공통) ─────────────────────────────
         Page<Post> postPage = boardService.getPostList(categoryId, keyword, page);
         model.addAttribute("posts",       postPage.getContent());
         model.addAttribute("postPage",    postPage);

@@ -29,12 +29,19 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // 비인증 허용
-                        .requestMatchers("/auth/**", "/css/**", "/js/**", "/uploads/**").permitAll()
+                        // 비인증 허용 (홈, 게시글 목록/상세 공개)
+                        .requestMatchers(
+                                "/auth/**", "/css/**", "/js/**", "/uploads/**",
+                                "/", "/home", "/board", "/board/{id:[0-9]+}"
+                        ).permitAll()
                         // 관리자 전용
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        // 게시판 + 업로드 API — 로그인 필수
-                        .requestMatchers("/board/**", "/api/upload/**").authenticated()
+                        // 게시글 작성/수정/삭제/댓글/좋아요/파일업로드 — 로그인 필수
+                        .requestMatchers(
+                                "/board/write", "/board/*/edit", "/board/*/delete",
+                                "/board/*/comments", "/board/comments/**",
+                                "/board/*/like", "/api/upload/**"
+                        ).authenticated()
                         // 나머지 전부 로그인 필요
                         .anyRequest().authenticated()
                 )
@@ -67,7 +74,7 @@ public class SecurityConfig {
                 )
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
-                        .logoutSuccessUrl("/auth/login?logout=true")
+                        .logoutSuccessUrl("/home")          // ← 로그아웃 후 홈으로
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
