@@ -8,8 +8,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.authentication.DisabledException;
 
@@ -19,7 +17,7 @@ import org.springframework.security.authentication.DisabledException;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    private final LoginAttemptService loginAttemptService; // ✅ 추가
+    private final LoginAttemptService loginAttemptService;
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -31,9 +29,14 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/css/**", "/js/**").permitAll()  // 로그인·회원가입 허용
-                        .requestMatchers("/admin/**").hasRole("ADMIN")                 // 관리자 전용
-                        .anyRequest().authenticated()                                  // 나머지 로그인 필요
+                        // 비인증 허용
+                        .requestMatchers("/auth/**", "/css/**", "/js/**", "/uploads/**").permitAll()
+                        // 관리자 전용
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // 게시판 + 업로드 API — 로그인 필수
+                        .requestMatchers("/board/**", "/api/upload/**").authenticated()
+                        // 나머지 전부 로그인 필요
+                        .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/auth/login")           // 커스텀 로그인 페이지
@@ -52,7 +55,8 @@ public class SecurityConfig {
                             String redirect;
                             if (exception instanceof DisabledException) {
                                 redirect = "/auth/login?unverified=true";
-                            } else if (exception.getMessage() != null && exception.getMessage().contains("잠겼습니다")) {
+                            } else if (exception.getMessage() != null
+                                    && exception.getMessage().contains("잠겼습니다")) {
                                 redirect = "/auth/login?locked=true";
                             } else {
                                 redirect = "/auth/login?error=true";

@@ -17,12 +17,24 @@
             font-size: 13px; font-weight: bold; margin-top: 8px; }
         .admin-badge { background: #fef3c7; color: #d97706; }
         .user-badge  { background: #dbeafe; color: #2563eb; }
+        .menu-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px; margin-top: 32px;
+        }
+        .menu-item {
+            padding: 20px; border-radius: 12px; background: #f8fafc;
+            border: 1px solid #e2e8f0; text-decoration: none; color: #1e1b4b;
+            transition: all .15s; display: flex; flex-direction: column;
+            align-items: center; gap: 8px;
+        }
+        .menu-item:hover { background: #ede9fe; border-color: #c4b5fd; }
+        .menu-item .icon { font-size: 28px; }
+        .menu-item .label { font-size: 14px; font-weight: 600; }
     </style>
 </head>
 <body>
 <nav class="navbar">
     <span>🏠 Web01</span>
-
     <div>
         <a th:href="@{/profile}">⚙️ 프로필</a>
         <a th:if="${isAdmin}" th:href="@{/admin}">👑 관리자</a>
@@ -41,6 +53,22 @@
         <span th:if="${isAdmin}"  class="badge admin-badge">관리자</span>
         <span th:unless="${isAdmin}" class="badge user-badge">일반 회원</span>
         <p style="margin-top:20px; color:#666;">로그인에 성공했습니다.</p>
+
+        <!-- 메뉴 -->
+        <div class="menu-grid">
+            <a th:href="@{/board}" class="menu-item">
+                <span class="icon">📋</span>
+                <span class="label">게시판</span>
+            </a>
+            <a th:href="@{/profile}" class="menu-item">
+                <span class="icon">👤</span>
+                <span class="label">프로필</span>
+            </a>
+            <a th:if="${isAdmin}" th:href="@{/admin}" class="menu-item">
+                <span class="icon">👑</span>
+                <span class="label">관리자</span>
+            </a>
+        </div>
     </div>
 </div>
 </body>
