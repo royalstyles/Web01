@@ -6,6 +6,7 @@ import com.jhpj.Web01.repository.EmailVerificationTokenRepository;
 import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -63,6 +64,7 @@ public class AuthController {
 
     /** 이메일 인증 처리 */
     @GetMapping("/verify")
+    @Transactional
     public String verifyEmail(@RequestParam String token, Model model) {
         Optional<EmailVerificationToken> opt = tokenRepository.findByToken(token);
 

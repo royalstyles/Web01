@@ -1,8 +1,12 @@
 package com.jhpj.Web01.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -24,5 +28,25 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler(urlPrefix + "/**")
                 .addResourceLocations("file:" + uploadPath + "/");
+    }
+
+    // ── 뒤로가기 캐시 방지 인터셉터 추가 ──────────────────
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new HandlerInterceptor() {
+                    @Override
+                    public boolean preHandle(HttpServletRequest request,
+                                             HttpServletResponse response,
+                                             Object handler) {
+                        // 게시판 목록/상세 페이지는 캐시 없이 항상 서버에서 새로 로드
+                        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                        response.setHeader("Pragma", "no-cache");
+                        response.setDateHeader("Expires", 0);
+                        return true;
+                    }
+                })
+                // 정적 리소스 제외, 게시판 관련 경로만 적용
+                .addPathPatterns("/board/**", "/home", "/")
+                .excludePathPatterns("/uploads/**", "/css/**", "/js/**", "/favicon.svg");
     }
 }

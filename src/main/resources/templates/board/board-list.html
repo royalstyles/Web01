@@ -124,7 +124,7 @@
 <body>
 
 <!-- 게시판 페이지 -->
-<div th:replace="~{fragments/header :: siteHeader(boardName='게시판', rightMode='home')}"></div>
+<div th:replace="~{fragments/header :: siteHeader(${currentBoardName}, 'home')}"></div>
 
 <div class="wrapper">
 

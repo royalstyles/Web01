@@ -6,6 +6,7 @@
     <title th:text="${post.title}">게시글</title>
     <!-- Quill 뷰어 스타일 (에디터 없이 렌더링용) -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
@@ -136,13 +137,7 @@
 </head>
 <body>
 
-<nav class="navbar">
-    <span class="navbar-brand">📋 게시판</span>
-    <div style="display:flex; gap:8px;">
-        <a th:href="@{/home}">🏠 홈</a>
-        <a th:href="@{/board}">← 목록</a>
-    </div>
-</nav>
+<div th:replace="~{fragments/header :: siteHeader(boardName='게시글', rightMode='home')}"></div>
 
 <div class="wrapper">
 

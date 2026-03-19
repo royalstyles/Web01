@@ -21,6 +21,13 @@ public class ProfileController {
     /** 프로필 페이지 */
     @GetMapping
     public String profilePage(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        // ── 헤더 프래그먼트용 ──
+        model.addAttribute("isLoggedIn", true);
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("isAdmin",
+                userDetails.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+
         model.addAttribute("user", profileService.findByUsername(userDetails.getUsername()));
         return "profile";
     }

@@ -2,6 +2,7 @@ package com.jhpj.Web01.controller;
 
 import com.jhpj.Web01.entity.Comment;
 import com.jhpj.Web01.entity.Post;
+import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +22,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BoardController {
 
+    // 필드 추가
     private final BoardService boardService;
+    private final UserRepository userRepository;
 
     // ── 목록 ─────────────────────────────────────────────────
 
@@ -29,7 +32,11 @@ public class BoardController {
     public String list(@RequestParam(required = false) Long categoryId,
                        @RequestParam(required = false) String keyword,
                        @RequestParam(defaultValue = "0") int page,
+                       @AuthenticationPrincipal UserDetails userDetails,
                        Model model) {
+
+        // ── 헤더 프래그먼트용 로그인 정보 주입 ──
+        addHeaderAttributes(userDetails, model);
 
         Page<Post> postPage = boardService.getPostList(categoryId, keyword, page);
 
@@ -40,13 +47,26 @@ public class BoardController {
         model.addAttribute("keyword",    keyword);
         model.addAttribute("currentPage", page);
 
+        // ── 현재 카테고리명 (헤더 표시용) ── 추가
+        String boardName = "게시판";
+        if (categoryId != null) {
+            boardName = boardService.findAllCategories().stream()
+                    .filter(c -> c.getId().equals(categoryId))
+                    .findFirst()
+                    .map(c -> c.getName())
+                    .orElse("게시판");
+        }
+        model.addAttribute("currentBoardName", boardName);
+
         return "board/board-list";
     }
 
     // ── 작성 폼 ───────────────────────────────────────────────
 
     @GetMapping("/write")
-    public String writeForm(Model model) {
+    public String writeForm(@AuthenticationPrincipal UserDetails userDetails,
+                            Model model) {
+        addHeaderAttributes(userDetails, model);
         model.addAttribute("categories", boardService.findAllCategories());
         return "board/board-write";
     }
@@ -77,6 +97,8 @@ public class BoardController {
                        @AuthenticationPrincipal UserDetails userDetails,
                        Model model) {
 
+        addHeaderAttributes(userDetails, model);
+
         Post post = boardService.getPost(postId);
         List<Comment> comments = boardService.getComments(postId);
 
@@ -92,12 +114,10 @@ public class BoardController {
             boolean isAdmin  = userDetails.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             model.addAttribute("canEdit", isAuthor || isAdmin);
-            model.addAttribute("isLoggedIn", true);
         } else {
             model.addAttribute("liked",           false);
             model.addAttribute("currentUsername", "");
             model.addAttribute("canEdit",         false);
-            model.addAttribute("isLoggedIn",      false);
         }
 
         return "board/board-view";
@@ -110,6 +130,9 @@ public class BoardController {
                            @AuthenticationPrincipal UserDetails userDetails,
                            Model model,
                            RedirectAttributes ra) {
+
+        addHeaderAttributes(userDetails, model); // ← 추가
+
         Post post = boardService.getPostReadOnly(postId);
 
         boolean isAuthor = post.getAuthor().getUsername().equals(userDetails.getUsername());
@@ -222,6 +245,21 @@ public class BoardController {
             return ResponseEntity.ok(Map.of("liked", liked, "count", count));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ── 헤더 프래그먼트용 로그인 정보 공통 주입 ──────────────
+    private void addHeaderAttributes(UserDetails userDetails, Model model) {
+        if (userDetails != null) {
+            model.addAttribute("isLoggedIn", true);
+            model.addAttribute("username", userDetails.getUsername());
+            model.addAttribute("isAdmin",
+                    userDetails.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+            userRepository.findByUsername(userDetails.getUsername())
+                    .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));
+        } else {
+            model.addAttribute("isLoggedIn", false);
         }
     }
 }
