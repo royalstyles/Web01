@@ -364,8 +364,15 @@ master push
 - 세션 쿠키(`JSESSIONID`) 로그아웃 시 삭제
 - DB 비밀번호 및 메일 비밀번호는 `application-secret.properties`로 분리 관리 (Git 제외)
 - 아이디 변경 시 기존 세션 강제 무효화 (재로그인 유도)
-
----
+- 운영체제마다 파일 업로드 폴더 구분되서 적용되도록 환경변수 적용
+``` 
+  # IntelliJ Run Configuration → Environment variables에 입력:
+      Windows: APP_UPLOAD_PATH=C:/NAS Uploads
+      Windows: APP_UPLOAD_URL_PREFIX=/NAS Uploads
+      
+      Mac: APP_UPLOAD_PATH=/Users/junghokim/NAS Uploads
+      Mac: APP_UPLOAD_URL_PREFIX=/NAS Uploads
+```
 
 ## 📝 라이선스
 
