@@ -5,6 +5,8 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>홈 — Web01</title>
+    <!-- 헤더 스타일 추가 -->
+    <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,103 +16,8 @@
             min-height: 100vh;
         }
 
-        /* ── 네비게이션 ── */
-        .navbar {
-            background: #4f46e5;
-            padding: 0 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 12px rgba(79,70,229,.35);
-            height: 56px;
-        }
-
-        .navbar-brand {
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-            letter-spacing: -.3px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .navbar-right {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        a.navbar-brand {
-            text-decoration: none;
-            color: white;
-        }
-
-        /* 내 정보 칩 */
-        .user-chip {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,.15);
-            border-radius: 24px;
-            padding: 5px 14px 5px 6px;
-            margin-right: 4px;
-        }
-        .user-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: white;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        .user-info-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.1;
-        }
-        .user-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-        }
-        .user-role {
-            font-size: 10px;
-            color: rgba(255,255,255,.7);
-        }
-
-        .nav-btn {
-            color: white;
-            text-decoration: none;
-            font-size: 13px;
-            padding: 6px 12px;
-            border-radius: 6px;
-            background: rgba(255,255,255,.12);
-            transition: background .2s;
-            white-space: nowrap;
-        }
         .nav-btn:hover { background: rgba(255,255,255,.25); }
 
-        .nav-logout-btn {
-            background: none;
-            border: 1px solid rgba(255,255,255,.3);
-            color: white;
-            font-size: 13px;
-            padding: 5px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all .2s;
-            font-family: inherit;
-        }
         .nav-logout-btn:hover {
             background: rgba(255,255,255,.15);
             border-color: rgba(255,255,255,.5);
@@ -327,52 +234,8 @@
 </head>
 <body>
 
-<!-- 네비게이션 -->
-<nav class="navbar">
-    <a th:href="@{/home}" class="navbar-brand">
-        🏠 Home
-        <span th:if="${currentCategoryName != null}"
-              style="font-weight:400; opacity:.75; margin-left:6px;">
-        / <span th:text="${currentCategoryName}"></span>
-    </span>
-    </a>
-
-    <div class="navbar-right">
-        <!-- ── 로그인 상태 ── -->
-        <th:block th:if="${isLoggedIn}">
-            <!-- 내 정보 칩 -->
-            <div class="user-chip">
-                <div class="user-avatar">
-                    <img th:if="${profileImage != null}"
-                         th:src="${profileImage}"
-                         style="width:100%; height:100%; object-fit:cover;"
-                         alt="프로필"/>
-                    <span th:unless="${profileImage != null}"
-                          th:text="${#strings.substring(username, 0, 1).toUpperCase()}"></span>
-                </div>
-                <div class="user-info-text">
-                    <span class="user-name" th:text="${username}">username</span>
-                    <span class="user-role" th:text="${isAdmin} ? '관리자' : '일반 회원'">일반 회원</span>
-                </div>
-            </div>
-
-            <a th:href="@{/profile}" class="nav-btn">⚙️ 프로필</a>
-            <a th:if="${isAdmin}" th:href="@{/admin}" class="nav-btn">👑 관리자</a>
-
-            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button type="submit" class="nav-logout-btn">로그아웃</button>
-            </form>
-        </th:block>
-
-        <!-- ── 비로그인 상태 ── -->
-        <th:block th:unless="${isLoggedIn}">
-            <a th:href="@{/auth/login}"  class="nav-btn">로그인</a>
-            <a th:href="@{/auth/signup}" class="nav-btn">회원가입</a>
-        </th:block>
-
-    </div>
-</nav>
+<!-- 기존 nav 블록 전체 삭제 후 아래로 교체 -->
+<div th:replace="~{fragments/header :: siteHeader(${currentCategoryName ?: '게시판'}, 'home')}"></div>
 
 <div class="wrapper">
 

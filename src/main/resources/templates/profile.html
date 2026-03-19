@@ -4,6 +4,7 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>프로필 수정</title>
+    <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -218,10 +219,8 @@
 </head>
 <body>
 
-<nav class="navbar">
-    <span class="navbar-brand">👤 프로필 수정</span>
-    <a th:href="@{/home}">← 홈으로</a>
-</nav>
+<!-- 프로필 페이지 -->
+<div th:replace="~{fragments/header :: siteHeader('프로필 수정', 'profile')}"></div>
 
 <div class="wrapper">
 

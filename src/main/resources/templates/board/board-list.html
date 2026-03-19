@@ -4,6 +4,7 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>게시판</title>
+    <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
@@ -122,13 +123,8 @@
 </head>
 <body>
 
-<nav class="navbar">
-    <span class="navbar-brand">📋 게시판</span>
-    <div style="display:flex; gap:8px;">
-        <a th:href="@{/home}">🏠 홈</a>
-        <a th:href="@{/profile}">⚙️ 프로필</a>
-    </div>
-</nav>
+<!-- 게시판 페이지 -->
+<div th:replace="~{fragments/header :: siteHeader('게시판')}"></div>
 
 <div class="wrapper">
 
