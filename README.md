@@ -46,6 +46,8 @@ Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 
 ```
 src/main/java/com/jhpj/Web01/
 ├── Web01Application.java                  # 애플리케이션 진입점
+├── ServletInitializer.java                # WAR 배포 설정 (지원)
+├── IndexController.java                   # 기본 인덱스 엔드포인트
 ├── config/
 │   ├── SecurityConfig.java                # Spring Security 설정
 │   ├── PasswordEncoderConfig.java         # BCrypt 인코더 빈 등록
@@ -98,7 +100,8 @@ src/main/resources/
 │   ├── V5__board_comments.sql
 │   ├── V6__board_post_likes.sql           # 좋아요 증감 트리거 포함
 │   ├── V7__board_post_files.sql
-│   └── V8__user_profile_image.sql
+│   ├── V8__user_profile_image.sql
+│   └── V9__categories_sort_order_update.sql
 ├── static/
 │   └── favicon.svg
 └── templates/
@@ -256,8 +259,9 @@ JPA `ddl-auto=validate`, **Flyway**로 DDL 관리. 앱 시작 시 `db/migration/
 | V6 | `V6__board_post_likes.sql` | POST_LIKES + 좋아요 증감 트리거 |
 | V7 | `V7__board_post_files.sql` | POST_FILES (임시 업로드 지원) |
 | V8 | `V8__user_profile_image.sql` | USERS.PROFILE_IMAGE 컬럼 추가 |
+| V9 | `V9__categories_sort_order_update.sql` | 카테고리 정렬 인덱스 추가 |
 
-> ⚠️ 기존 DB에 처음 Flyway를 적용할 때는 `baseline-on-migrate=true`, `baseline-version=<현재 최신 버전>`으로 설정하세요.
+> ⚠️ 기존 DB에 처음 Flyway를 적용할 때는 `baseline-on-migrate=true`, `baseline-version=9`로 설정하세요.
 
 ### 주요 테이블 구조
 
@@ -368,7 +372,7 @@ spring.datasource.username=springuser
 # Flyway
 spring.flyway.enabled=true
 spring.flyway.baseline-on-migrate=false
-spring.flyway.baseline-version=8
+spring.flyway.baseline-version=9
 spring.flyway.validate-migration-naming=true
 
 # JPA
