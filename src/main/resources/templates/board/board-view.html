@@ -242,8 +242,9 @@
 </div>
 
 <script th:inline="javascript">
-    const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
-    const csrfToken  = /*[[${_csrf.token}]]*/ '';
+    // 비로그인 시 세션이 없어서 _csrf 객체가 null이 되는데, null 체크 없이 .headerName을 호출하다 세션 생성을 시도 → 이미 응답이 시작된 후라 실패 → 500 에러로 이어진 흐름 수정
+    const csrfHeader = /*[[${_csrf != null ? _csrf.headerName : ''}]]*/ '';
+    const csrfToken  = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
     const currentUsername = /*[[${currentUsername}]]*/ '';
 
     // ── 좋아요 토글 ──────────────────────────────────────
