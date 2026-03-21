@@ -1,6 +1,7 @@
 package com.jhpj.Web01.controller;
 
 import com.jhpj.Web01.entity.User;
+import com.jhpj.Web01.repository.CategoryRepository;
 import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.AdminService;
 import com.jhpj.Web01.service.LoginAttemptService;
@@ -24,6 +25,7 @@ public class AdminController {
     private final UserRepository userRepository;
     private final AdminService adminService;
     private final LoginAttemptService loginAttemptService;
+    private final CategoryRepository categoryRepository;  // 추가
 
     /** 대시보드 */
     @GetMapping
@@ -51,6 +53,7 @@ public class AdminController {
         model.addAttribute("lockedCount",     lockedCount);
         model.addAttribute("lockedIds",       lockedIds);
         model.addAttribute("currentUsername", currentUser.getUsername());
+        model.addAttribute("categories", categoryRepository.findAllByOrderBySortOrderAsc());
 
         return "admin";
     }
@@ -106,5 +109,46 @@ public class AdminController {
                         ra.addFlashAttribute("errorMsg", msg);
                     }
                 });
+    }
+
+    // ── 카테고리 추가 ──────────────────────────────────────────
+    @PostMapping("/categories/add")
+    public String addCategory(@RequestParam String name,
+                              @RequestParam(defaultValue = "0") int sortOrder,
+                              RedirectAttributes ra) {
+        try {
+            adminService.addCategory(name, sortOrder);
+            ra.addFlashAttribute("successMsg", "카테고리가 추가되었습니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin";
+    }
+
+    // ── 카테고리 수정 ──────────────────────────────────────────
+    @PostMapping("/categories/{id}/update")
+    public String updateCategory(@PathVariable Long id,
+                                 @RequestParam String name,
+                                 @RequestParam(defaultValue = "0") int sortOrder,
+                                 RedirectAttributes ra) {
+        try {
+            adminService.updateCategory(id, name, sortOrder);
+            ra.addFlashAttribute("successMsg", "카테고리가 수정되었습니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin";
+    }
+
+    // ── 카테고리 삭제 ──────────────────────────────────────────
+    @PostMapping("/categories/{id}/delete")
+    public String deleteCategory(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            adminService.deleteCategory(id);
+            ra.addFlashAttribute("successMsg", "카테고리가 삭제되었습니다. 해당 게시글은 미분류로 유지됩니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin";
     }
 }

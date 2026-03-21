@@ -9,27 +9,13 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
 
-        /* ── 네비게이션 ── */
-        .navbar {
-            background: #4f46e5; color: white;
-            padding: 14px 32px;
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 8px rgba(79,70,229,.3);
-        }
-        .navbar-brand { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
-        .navbar a { color: white; text-decoration: none; font-size: 14px;
-                    padding: 6px 14px; border-radius: 6px;
-                    background: rgba(255,255,255,.15); transition: background .2s; }
-        .navbar a:hover { background: rgba(255,255,255,.25); }
-
         /* ── 본문 래퍼 ── */
         .wrapper { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
         .page-title { font-size: 22px; font-weight: 700; color: #1e1b4b; margin-bottom: 24px; }
 
         /* ── 알림 메시지 ── */
         .alert { padding: 12px 18px; border-radius: 8px; margin-bottom: 20px;
-                 font-size: 14px; display: flex; align-items: center; gap: 8px; }
+            font-size: 14px; display: flex; align-items: center; gap: 8px; }
         .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .alert-error   { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
 
@@ -58,6 +44,13 @@
         .stat-value { font-size: 28px; font-weight: 700; color: #1e1b4b; line-height: 1; }
         .stat-label { font-size: 13px; color: #6b7280; margin-top: 4px; }
 
+        /* ── 섹션 타이틀 ── */
+        .section-title {
+            font-size: 16px; font-weight: 700; color: #1e1b4b;
+            margin: 32px 0 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
         /* ── 테이블 카드 ── */
         .table-card {
             background: white; border-radius: 12px;
@@ -68,7 +61,11 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .table-header h3 { font-size: 16px; font-weight: 600; color: #1e1b4b; }
-        .user-count { font-size: 13px; color: #6b7280; }
+        .count-badge {
+            font-size: 13px; color: #6b7280;
+            background: #f1f5f9; padding: 3px 10px;
+            border-radius: 20px;
+        }
 
         table { width: 100%; border-collapse: collapse; }
         thead th {
@@ -93,11 +90,12 @@
             padding: 3px 10px; border-radius: 20px;
             font-size: 12px; font-weight: 600; white-space: nowrap;
         }
-        .badge-admin    { background: #fef3c7; color: #d97706; }
-        .badge-user     { background: #dbeafe; color: #2563eb; }
-        .badge-verified { background: #dcfce7; color: #16a34a; }
+        .badge-admin      { background: #fef3c7; color: #d97706; }
+        .badge-user       { background: #dbeafe; color: #2563eb; }
+        .badge-verified   { background: #dcfce7; color: #16a34a; }
         .badge-unverified { background: #fee2e2; color: #dc2626; }
-        .badge-locked   { background: #fef3c7; color: #b45309; }
+        .badge-locked     { background: #fef3c7; color: #b45309; }
+        .badge-category   { background: #ede9fe; color: #6d28d9; }
 
         /* ── 액션 버튼 ── */
         .action-group { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -111,6 +109,7 @@
         .btn-unlock  { background: #fef3c7; color: #b45309; }
         .btn-verify  { background: #dcfce7; color: #15803d; }
         .btn-delete  { background: #fee2e2; color: #dc2626; }
+        .btn-edit    { background: #dbeafe; color: #2563eb; }
         .btn-self    { opacity: .35; cursor: not-allowed; }
 
         /* ── 사용자 셀 ── */
@@ -123,6 +122,83 @@
         }
         .user-id { font-size: 11px; color: #9ca3af; }
 
+        /* ── 카테고리 추가 폼 ── */
+        .add-category-bar {
+            padding: 18px 24px;
+            border-top: 1px solid #f1f5f9;
+            background: #fafbff;
+            display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
+        }
+        .add-category-bar label {
+            font-size: 12px; color: #6b7280;
+            display: block; margin-bottom: 5px; font-weight: 500;
+        }
+        .add-category-bar input[type="text"],
+        .add-category-bar input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0; border-radius: 8px;
+            font-size: 14px; font-family: inherit;
+            transition: border .2s;
+        }
+        .add-category-bar input:focus {
+            outline: none; border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+        }
+        .btn-add {
+            padding: 8px 22px; background: #4f46e5; color: white;
+            border: none; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: background .15s;
+            white-space: nowrap;
+        }
+        .btn-add:hover { background: #4338ca; }
+
+        /* ── 모달 ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.45); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: white; border-radius: 16px; padding: 32px;
+            width: 380px; box-shadow: 0 8px 40px rgba(0,0,0,.18);
+            animation: modalIn .18s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(.95) translateY(-8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-title { font-size: 16px; font-weight: 700; color: #1e1b4b; margin-bottom: 20px; }
+        .modal-field { margin-bottom: 14px; }
+        .modal-field label {
+            font-size: 13px; color: #6b7280;
+            display: block; margin-bottom: 6px; font-weight: 500;
+        }
+        .modal-field input {
+            width: 100%; padding: 10px 14px;
+            border: 1px solid #e2e8f0; border-radius: 8px;
+            font-size: 14px; font-family: inherit;
+            transition: border .2s;
+        }
+        .modal-field input:focus {
+            outline: none; border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+        }
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px;
+        }
+        .btn-modal-cancel {
+            padding: 9px 20px; border: 1px solid #e2e8f0;
+            border-radius: 8px; background: white; color: #374151;
+            font-size: 14px; cursor: pointer; font-family: inherit;
+        }
+        .btn-modal-save {
+            padding: 9px 22px; background: #4f46e5; color: white;
+            border: none; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; font-family: inherit;
+        }
+        .btn-modal-save:hover { background: #4338ca; }
+
         @media (max-width: 768px) {
             .stat-grid { grid-template-columns: repeat(2, 1fr); }
             .action-group { flex-direction: column; }
@@ -131,11 +207,10 @@
 </head>
 <body>
 
-<!-- 관리자 페이지 -->
 <div th:replace="~{fragments/header :: siteHeader('관리자 대시보드', 'admin')}"></div>
 
 <div class="wrapper">
-    <p class="page-title">회원 관리</p>
+    <p class="page-title">관리자 대시보드</p>
 
     <!-- 알림 메시지 -->
     <div th:if="${successMsg}" class="alert alert-success">
@@ -177,11 +252,14 @@
         </div>
     </div>
 
-    <!-- ── 회원 테이블 ── -->
+    <!-- ════════════════════════════════════════
+         회원 관리
+    ════════════════════════════════════════ -->
+    <div class="section-title">👥 회원 관리</div>
     <div class="table-card">
         <div class="table-header">
             <h3>전체 회원 목록</h3>
-            <span class="user-count" th:text="${totalUsers} + '명'"></span>
+            <span class="count-badge" th:text="${totalUsers} + '명'"></span>
         </div>
 
         <table>
@@ -234,7 +312,7 @@
                 <td>
                     <div class="action-group">
 
-                        <!-- 권한 변경 (자기 자신이면 비활성) -->
+                        <!-- 권한 변경 -->
                         <th:block th:if="${user.username == currentUsername}">
                             <button class="btn btn-role btn-self" disabled>권한 변경</button>
                         </th:block>
@@ -247,21 +325,21 @@
                             </form>
                         </th:block>
 
-                        <!-- 잠금 해제 (잠긴 경우만) -->
+                        <!-- 잠금 해제 -->
                         <form th:if="${lockedIds.contains(user.id)}"
                               th:action="@{/admin/users/{id}/unlock(id=${user.id})}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-unlock">🔓 잠금 해제</button>
                         </form>
 
-                        <!-- 인증 강제 (미인증인 경우만) -->
+                        <!-- 인증 강제 -->
                         <form th:unless="${user.emailVerified}"
                               th:action="@{/admin/users/{id}/verify(id=${user.id})}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-verify">✉️ 인증 처리</button>
                         </form>
 
-                        <!-- 삭제 (자기 자신이면 비활성) -->
+                        <!-- 삭제 -->
                         <th:block th:if="${user.username == currentUsername}">
                             <button class="btn btn-delete btn-self" disabled>삭제</button>
                         </th:block>
@@ -280,6 +358,137 @@
         </table>
     </div>
 
+    <!-- ════════════════════════════════════════
+         게시판 카테고리 관리
+    ════════════════════════════════════════ -->
+    <div class="section-title">📋 게시판 카테고리 관리</div>
+    <div class="table-card">
+        <div class="table-header">
+            <h3>카테고리 목록</h3>
+            <span class="count-badge" th:text="${#lists.size(categories)} + '개'"></span>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th style="width:60px;">ID</th>
+                <th>카테고리명</th>
+                <th style="width:110px; text-align:center;">정렬 순서</th>
+                <th style="width:160px;">관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(categories)}">
+                <td colspan="4" style="text-align:center; padding:40px 0; color:#9ca3af; font-size:14px;">
+                    📭 등록된 카테고리가 없습니다.
+                </td>
+            </tr>
+            <tr th:each="cat : ${categories}">
+                <td style="color:#9ca3af; font-size:13px;" th:text="${cat.id}"></td>
+                <td>
+                    <span class="badge badge-category" th:text="${cat.name}"></span>
+                </td>
+                <td style="text-align:center; color:#6b7280;" th:text="${cat.sortOrder}"></td>
+                <td>
+                    <div class="action-group">
+                        <!-- 수정 버튼 → 모달 오픈 -->
+                        <button class="btn btn-edit"
+                                th:data-cat-id="${cat.id}"
+                                th:data-cat-name="${cat.name}"
+                                th:data-cat-sort="${cat.sortOrder}"
+                                onclick="openEditModal(this)">
+                            ✏️ 수정
+                        </button>
+                        <!-- 삭제 -->
+                        <form th:action="@{/admin/categories/{id}/delete(id=${cat.id})}" method="post"
+                              th:data-cat-name="${cat.name}"
+                              onsubmit="return confirmDelete(this)">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-delete">🗑 삭제</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- 카테고리 추가 폼 -->
+        <div class="add-category-bar">
+            <form th:action="@{/admin/categories/add}" method="post"
+                  style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; width:100%;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <label>카테고리명 <span style="color:#dc2626;">*</span></label>
+                    <input type="text" name="name" placeholder="예: 자유게시판"
+                           required maxlength="50" style="width:200px;">
+                </div>
+                <div>
+                    <label>정렬 순서</label>
+                    <input type="number" name="sortOrder" value="0" min="0" style="width:90px;">
+                </div>
+                <button type="submit" class="btn-add">➕ 추가</button>
+            </form>
+        </div>
+    </div>
+
 </div>
+
+<!-- ── 카테고리 수정 모달 ── -->
+<div id="edit-modal" class="modal-overlay" onclick="handleModalOverlayClick(event)">
+    <div class="modal-box">
+        <p class="modal-title">✏️ 카테고리 수정</p>
+        <form id="edit-form" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="modal-field">
+                <label>카테고리명 <span style="color:#dc2626;">*</span></label>
+                <input type="text" id="edit-name" name="name" required maxlength="50">
+            </div>
+            <div class="modal-field">
+                <label>정렬 순서</label>
+                <input type="number" id="edit-sort" name="sortOrder" min="0">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeEditModal()">취소</button>
+                <button type="submit" class="btn-modal-save">저장</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal(btn) {
+        const id       = btn.dataset.catId;
+        const name     = btn.dataset.catName;
+        const sortOrder = btn.dataset.catSort;
+        document.getElementById('edit-name').value  = name;
+        document.getElementById('edit-sort').value  = sortOrder;
+        document.getElementById('edit-form').action = '/admin/categories/' + id + '/update';
+        document.getElementById('edit-modal').classList.add('open');
+        document.getElementById('edit-name').focus();
+    }
+
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').classList.remove('open');
+    }
+
+    // 모달 바깥(오버레이) 클릭 시 닫기
+    function handleModalOverlayClick(e) {
+        if (e.target === document.getElementById('edit-modal')) {
+            closeEditModal();
+        }
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeEditModal();
+    });
+
+    function confirmDelete(form) {
+        const name = form.dataset.catName;
+        return confirm('[' + name + '] 카테고리를 삭제하시겠습니까?\n해당 게시글은 미분류로 유지됩니다.');
+    }
+</script>
+
 </body>
 </html>
