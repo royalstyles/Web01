@@ -43,6 +43,12 @@
             <label>비밀번호</label>
             <input type="password" name="password" placeholder="비밀번호를 입력하세요" required
                    onkeydown="if(event.key==='Enter') this.form.submit();">
+            <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <input type="checkbox" id="rememberMe" style="width:auto; accent-color:#4f46e5; cursor:pointer;">
+                <label for="rememberMe" style="margin:0; font-size:14px; color:#555; cursor:pointer;">
+                    아이디 기억하기
+                </label>
+            </div>
         </div>
         <button class="btn" type="submit">로그인</button>
     </form>
@@ -59,5 +65,25 @@
         이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.
     </div>
 </div>
+<script>
+    const usernameInput = document.querySelector('input[name="username"]');
+    const rememberChk   = document.getElementById('rememberMe');
+
+    // 페이지 로드 시 저장된 아이디 복원
+    const savedId = localStorage.getItem('savedUsername');
+    if (savedId) {
+        usernameInput.value = savedId;
+        rememberChk.checked = true;
+    }
+
+    // 폼 제출 시 체크 여부에 따라 저장/삭제
+    document.querySelector('form').addEventListener('submit', function () {
+        if (rememberChk.checked) {
+            localStorage.setItem('savedUsername', usernameInput.value);
+        } else {
+            localStorage.removeItem('savedUsername');
+        }
+    });
+</script>
 </body>
 </html>
