@@ -1,7 +1,7 @@
 # Web01 — Spring Boot 웹 애플리케이션
 
 Spring Boot 3 기반의 커뮤니티 웹 애플리케이션입니다.  
-Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 댓글, 좋아요), GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
+Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 댓글, 좋아요), **라이트/다크 테마**, GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
 
 ---
 
@@ -51,13 +51,14 @@ src/main/java/com/jhpj/Web01/
 ├── config/
 │   ├── SecurityConfig.java                # Spring Security 설정
 │   ├── PasswordEncoderConfig.java         # BCrypt 인코더 빈 등록
-│   └── WebMvcConfig.java                  # 정적 파일 핸들러 + 스케줄러 활성화
+│   └── WebMvcConfig.java                  # 정적 파일 핸들러 (OS 경로 호환) + 스케줄러 활성화
 ├── controller/
 │   ├── AuthController.java                # 로그인 / 회원가입 / 이메일 인증
 │   ├── HomeController.java                # 홈 (게시판 목록 통합)
 │   ├── BoardController.java               # 게시판 CRUD + 댓글 + 좋아요
 │   ├── FileUploadController.java          # 이미지 · 동영상 업로드 API
 │   ├── AdminController.java               # 관리자 대시보드
+│   ├── MyPostsController.java             # 내 글 관리
 │   └── ProfileController.java             # 프로필 관리 + 이미지 업로드
 ├── entity/
 │   ├── User.java                          # 회원 엔티티 (UserDetails 구현)
@@ -103,18 +104,24 @@ src/main/resources/
 │   ├── V8__user_profile_image.sql
 │   └── V9__categories_sort_order_update.sql
 ├── static/
+│   ├── css/
+│   │   └── theme.css                      # 라이트/다크 모드 CSS 변수 & 오버라이드
+│   ├── js/
+│   │   └── theme.js                       # FOUC 방지 테마 복원 스크립트
 │   └── favicon.svg
 └── templates/
-    ├── home.html                          # 홈 (게시판 통합, 로그인/비로그인 분기)
     ├── admin.html                         # 관리자 대시보드
+    ├── my-posts.html                      # 내 글 관리
     ├── profile.html                       # 프로필 수정
     ├── profile-verify-result.html
+    ├── fragments/
+    │   └── header.html                    # 공통 헤더 (siteHeader / headerStyles 프래그먼트)
     ├── auth/
     │   ├── login.html
     │   ├── signup.html
     │   └── verify-result.html
     └── board/
-        ├── board-list.html                # 게시판 목록
+        ├── board-list.html                # 게시판 목록 + 홈 (로그인/비로그인 통합)
         ├── board-view.html                # 게시글 상세 (댓글, 좋아요 AJAX)
         └── board-write.html               # 게시글 작성/수정 (Quill.js 에디터)
 ```
@@ -127,6 +134,7 @@ src/main/resources/
 - 커스텀 로그인 페이지 (`/auth/login`)
 - BCrypt 비밀번호 암호화
 - 로그아웃 시 세션 및 쿠키 완전 삭제 (CSRF 토큰 방식 POST)
+- 아이디 기억하기 (localStorage 저장)
 
 ### 이메일 인증
 - 회원가입 시 즉시 인증 메일 발송 (Gmail SMTP)
@@ -141,29 +149,37 @@ src/main/resources/
 | 권한 | 접근 가능 경로 |
 |------|----------------|
 | 비로그인 | `/`, `/home`, `/board/**` (읽기 전용), `/auth/**` |
-| `ROLE_USER` | 비로그인 + 게시글 작성/수정/삭제, 댓글, 좋아요, `/profile/**` |
+| `ROLE_USER` | 비로그인 + 게시글 작성/수정/삭제, 댓글, 좋아요, `/profile/**`, `/my-posts/**` |
 | `ROLE_ADMIN` | 전체 + `/admin/**` |
 
-### 게시판 — 신규
+### 라이트/다크 테마
+- 모든 페이지 공통 적용 (`fragments/header :: headerStyles` 프래그먼트)
+- `theme.js`: 페이지 로드 직후 `<html data-theme>` 복원 → FOUC(화면 깜빡임) 방지
+- `theme.css`: CSS 변수 기반 색상 관리, `[data-theme="dark"]` 오버라이드로 모든 컴포넌트 커버
+- 헤더 우측 🌙/☀️ 버튼으로 즉시 전환, `localStorage`에 설정 영구 저장
+
+### 게시판
 - **목록/검색**: 카테고리 필터 + 제목 키워드 검색, 10건 페이징
-- **Quill.js 리치 텍스트 에디터**: 폰트, 색상, 표, 코드블록, 이미지, 동영상 지원
+- **Quill.js 리치 텍스트 에디터**: 폰트, 색상, 정렬, 코드블록, 이미지, 동영상 지원
 - **이미지 업로드**: 툴바 클릭 → 서버 저장 → URL 삽입 (최대 20MB)
-- **동영상 업로드**: 별도 버튼 → 서버 저장 → 에디터 삽입 (최대 500MB)
+- **동영상 업로드**: 별도 버튼 → 서버 저장 → `<video controls>` 태그로 에디터 삽입 (최대 500MB)
 - **댓글**: AJAX 비동기 등록/수정/삭제 (본인 + 관리자 수정·삭제 가능)
 - **좋아요**: AJAX 토글, Oracle 트리거로 `POSTS.LIKE_COUNT` 자동 동기화
 - **조회수**: 상세 페이지 접근 시 자동 증가
 - **수정/삭제**: 작성자 또는 관리자만 가능
 - **비로그인 공개**: 목록 및 상세 읽기 가능, 작성/댓글/좋아요는 로그인 필요
 
-### 파일 업로드 — 신규
+### 파일 업로드
 - 저장 경로: `APP_UPLOAD_PATH` 환경변수 지정 (OS별 분리)
   - Docker 배포: `/app/uploads/`
-  - 로컬 Windows: `C:/NAS Uploads/`
-  - 로컬 Mac: `/Users/junghokim/NAS Uploads/`
+  - 로컬 Windows: `C:/NAS Uploads/` (공백 포함 경로 `Paths.get().toUri()` 로 호환 처리)
 - 하위 디렉토리: `images/`, `videos/`, `profiles/`
 - UUID 기반 저장 파일명으로 중복 방지
-- **고아 파일 자동 정리 스케줄러**: 매 1시간마다 게시글과 연결되지 않은 임시 파일 삭제 (프로필 이미지 제외)
-- 파일↔게시글 연결: 임시 업로드(post=null) → 게시글 저장 시 `attachFilesToPost()`로 연결
+- **고아 파일 자동 정리 스케줄러**: 매 1시간마다 게시글 미연결 임시 파일 삭제 (프로필 이미지 제외)
+- 파일↔게시글 연결: 임시 업로드(`post=null`) → 게시글 저장 시 `attachFilesToPost()`로 연결
+
+### 내 글 관리 (`/my-posts`)
+- 본인이 작성한 게시글 목록 조회 및 관리
 
 ### 관리자 대시보드 (`/admin`)
 - 통계 카드: 전체 회원 / 관리자 / 이메일 미인증 / 잠금 계정
@@ -221,11 +237,14 @@ src/main/resources/
 POST /api/upload/image  또는  /api/upload/video
     │
     ▼
-[서버] FileService.upload() → /app/uploads/{images|videos}/UUID.ext 저장
+[서버] FileService.upload() → {APP_UPLOAD_PATH}/{images|videos}/UUID.ext 저장
        PostFile(post=null) DB 저장 (임시 상태)
     │
     ▼
-[응답] { url: "/uploads/images/UUID.jpg" } → Quill 에디터에 URL 삽입
+[응답] { url: "/uploads/{images|videos}/UUID.ext" }
+       → 이미지: Quill 에디터에 <img> 삽입
+       → 동영상: 커스텀 VideoBlot으로 <video controls> 삽입
+            (기본 <iframe> blot 대신 사용 — X-Frame-Options: DENY 우회)
     │
     ▼
 [사용자] 게시글 등록 버튼 클릭
@@ -242,6 +261,11 @@ POST /api/upload/image  또는  /api/upload/video
 | 이미지 | jpg, png, gif, webp | 20MB |
 | 동영상 | mp4, webm, ogg, mov | 500MB |
 | 프로필 이미지 | jpg, png, gif, webp | 20MB |
+
+### 동영상 렌더링 방식
+
+Quill.js 기본 video blot은 `<iframe>`을 삽입하는데, Spring Security의 `X-Frame-Options: DENY` 헤더가 iframe 내 리소스 로딩을 차단합니다. 이를 해결하기 위해 커스텀 VideoBlot을 등록해 `<video controls>` 태그로 저장합니다.  
+기존 DB에 `<iframe class="ql-video">`로 저장된 게시글은 `board-view.html`의 클라이언트 스크립트가 `<video>` 태그로 변환해 재생합니다.
 
 ---
 
@@ -312,12 +336,8 @@ spring.mail.password=<GMAIL_APP_PASSWORD>
 EOF
 
 # 3. IntelliJ Run Configuration → Environment variables 설정
-#    Windows:
-#      APP_UPLOAD_PATH=C:/NAS Uploads
-#      APP_UPLOAD_URL_PREFIX=/uploads
-#    Mac:
-#      APP_UPLOAD_PATH=/Users/junghokim/NAS Uploads
-#      APP_UPLOAD_URL_PREFIX=/uploads
+#    APP_UPLOAD_PATH=C:/NAS Uploads        (Windows — 공백 포함 경로 지원)
+#    APP_UPLOAD_URL_PREFIX=/uploads
 
 # 4. 로컬 프로파일로 실행 (SQL 로그 활성화)
 ./gradlew bootRun --args='--spring.profiles.active=local'
@@ -470,6 +490,7 @@ master push
 - UUID 기반 저장 파일명으로 경로 추측 공격 방지
 - 아이디 변경 시 기존 세션 강제 무효화 (재로그인 유도)
 - 관리자 자기 자신 권한 변경 및 삭제 방지
+- 동영상은 `<video>` 태그로 렌더링 (iframe 미사용 — `X-Frame-Options: DENY` 정책 준수)
 
 ---
 
