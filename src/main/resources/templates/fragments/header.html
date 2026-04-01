@@ -213,7 +213,7 @@
     <div style="display:flex; align-items:center; gap:10px;">
 
         <!-- 집 아이콘 (홈 링크) -->
-        <a th:href="@{/home}" class="header-home-icon" title="홈으로">🏠</a>
+        <a th:href="@{/board}" class="header-home-icon" title="홈으로">🏠</a>
 
         <!-- 페이지 이름 -->
         <th:block th:if="${boardName != null and !#strings.isEmpty(boardName)}">
@@ -278,7 +278,7 @@
 
         <!-- ════ profile 모드: 뒤로가기 + 로그아웃 ════ -->
         <th:block th:if="${rightMode == 'profile'}">
-            <a th:href="@{/home}" class="header-btn">← 뒤로가기</a>
+            <a th:href="@{/board}" class="header-btn">← 뒤로가기</a>
             <form th:action="@{/auth/logout}" method="post" style="display:inline;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="header-btn header-btn-outline">로그아웃</button>

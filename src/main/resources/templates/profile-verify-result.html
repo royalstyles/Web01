@@ -24,7 +24,7 @@
 <div class="card">
     <div class="icon" th:text="${success} ? '✅' : '❌'"></div>
     <p th:text="${msg}"></p>
-    <a th:href="${success} ? '/home' : '/profile'" class="btn"
+    <a th:href="${success} ? '/board' : '/profile'" class="btn"
        th:text="${success} ? '홈으로 이동' : '프로필로 돌아가기'"></a>
 </div>
 </body>

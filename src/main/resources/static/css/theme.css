@@ -171,8 +171,15 @@
 [data-theme="dark"] .board-header h1,
 [data-theme="dark"] .comment-header h3,
 [data-theme="dark"] .comment-author,
+[data-theme="dark"] .page-title,
 [data-theme="dark"] .page-title h2,
-[data-theme="dark"] .section-title {
+[data-theme="dark"] .section-title,
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .table-header h3,
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .post-title-link,
+[data-theme="dark"] .profile-name {
     color: var(--text) !important;
 }
 
@@ -190,6 +197,7 @@
 /* ── 링크 ── */
 [data-theme="dark"] .post-title a { color: var(--text) !important; }
 [data-theme="dark"] .post-title a:hover { color: var(--accent) !important; }
+[data-theme="dark"] .post-title-link:hover { color: var(--accent) !important; }
 [data-theme="dark"] .back-link { color: var(--text-muted) !important; }
 [data-theme="dark"] .back-link:hover { color: var(--accent) !important; }
 

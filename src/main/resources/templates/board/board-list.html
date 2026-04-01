@@ -86,7 +86,7 @@
             background: #f8fafc; padding: 11px 16px;
             text-align: left; font-size: 12px; font-weight: 600;
             color: #6b7280; text-transform: uppercase; letter-spacing: .5px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0; white-space: nowrap;
         }
         tbody td {
             padding: 14px 16px; font-size: 14px; color: #374151;
@@ -103,7 +103,7 @@
             background: #ede9fe; color: #6d28d9; margin-right: 6px;
         }
         .meta { font-size: 12px; color: #9ca3af; margin-top: 3px; }
-        td.num { color: #9ca3af; font-size: 13px; text-align: center; }
+        td.num { color: #9ca3af; font-size: 13px; text-align: center; white-space: nowrap; }
 
         /* 빈 목록 */
         .empty { text-align: center; padding: 60px 0; color: #9ca3af; font-size: 15px; }
@@ -156,19 +156,25 @@
     <!-- 게시글 목록 -->
     <div class="table-card">
         <div class="table-top">
-            <h3>전체 <span th:text="${postPage.totalElements}">0</span>건</h3>
-            <a th:href="@{/board/write}" class="btn-write">✏️ 글쓰기</a>
+            <h3>
+                전체 <span th:text="${postPage.totalElements}">0</span>건
+                <th:block th:if="${keyword != null and !#strings.isEmpty(keyword)}">
+                    — "<strong th:text="${keyword}"></strong>" 검색 결과
+                </th:block>
+            </h3>
+            <!-- 비로그인 시 로그인 페이지로 이동 -->
+            <a th:href="${isLoggedIn} ? @{/board/write} : @{/auth/login}" class="btn-write">✏️ 글쓰기</a>
         </div>
 
         <table>
             <thead>
             <tr>
-                <th style="width:50px;" class="hide-sm">번호</th>
+                <th style="min-width:60px; width:60px; white-space:nowrap; text-align:center;" class="hide-sm">번호</th>
                 <th>제목</th>
-                <th style="width:100px;" class="hide-sm">작성자</th>
-                <th style="width:90px;"  class="hide-sm">작성일</th>
-                <th style="width:60px;">조회</th>
-                <th style="width:60px;">좋아요</th>
+                <th style="min-width:90px; width:90px; white-space:nowrap; text-align:center;" class="hide-sm">작성자</th>
+                <th style="min-width:90px; width:90px; white-space:nowrap; text-align:center;" class="hide-sm">작성일</th>
+                <th style="min-width:60px; width:60px; white-space:nowrap; text-align:center;">조회</th>
+                <th style="min-width:80px; width:80px; white-space:nowrap; text-align:center;">좋아요</th>
             </tr>
             </thead>
             <tbody>
