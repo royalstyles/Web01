@@ -12,24 +12,13 @@
         - 폼 제출 시 Quill 에디터 HTML 을 hidden input(content) 에 복사해 전송
         - 수정 모드: 기존 본문 HTML 을 Quill.setContents() 로 로드
     -->
+    <!-- theme.js 를 가장 먼저 로드해 FOUC 방지 + theme.css 로 다크/라이트 모드 CSS 변수 적용 -->
+    <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <!-- Quill.js CDN -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet"/>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
-
-        .navbar {
-            background: #4f46e5; color: white;
-            padding: 14px 32px;
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 8px rgba(79,70,229,.3);
-        }
-        .navbar-brand { font-size: 18px; font-weight: 700; }
-        .navbar a { color: white; text-decoration: none; font-size: 14px;
-            padding: 6px 14px; border-radius: 6px;
-            background: rgba(255,255,255,.15); }
-        .navbar a:hover { background: rgba(255,255,255,.25); }
 
         .wrapper { max-width: 860px; margin: 32px auto; padding: 0 20px 80px; }
 
@@ -99,10 +88,7 @@
 </head>
 <body>
 
-<nav class="navbar">
-    <span class="navbar-brand" th:text="${post != null} ? '✏️ 게시글 수정' : '✏️ 게시글 작성'"></span>
-    <a th:href="@{/board}">← 목록으로</a>
-</nav>
+<div th:replace="~{fragments/header :: siteHeader(boardName=${post != null ? '게시글 수정' : '게시글 작성'}, rightMode='home')}"></div>
 
 <div class="wrapper">
     <div class="card">
@@ -162,6 +148,30 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+<script>
+    // ── 커스텀 Video Blot ──────────────────────────────────
+    // Quill 기본 video blot 은 <iframe> 을 삽입하는데,
+    // Spring Security 의 X-Frame-Options: DENY 헤더가 iframe 로딩을 차단한다.
+    // <video controls> 태그를 사용하는 커스텀 blot 으로 덮어써서 HTML5 네이티브 플레이어로 재생
+    const BlockEmbed = Quill.import('blots/block/embed');
+    class VideoBlot extends BlockEmbed {
+        static create(value) {
+            const node = super.create();
+            node.setAttribute('src', value);
+            node.setAttribute('controls', 'true');
+            node.style.maxWidth = '100%';
+            node.style.borderRadius = '8px';
+            node.style.margin = '8px 0';
+            return node;
+        }
+        static value(node) {
+            return node.getAttribute('src');
+        }
+    }
+    VideoBlot.blotName = 'video';
+    VideoBlot.tagName  = 'video';
+    Quill.register(VideoBlot, true);   // true = 기존 iframe blot 덮어쓰기
+</script>
 <script th:inline="javascript">
     // ── CSRF 토큰 ──────────────────────────────────────────
     // 비로그인 시 세션이 없어서 _csrf 객체가 null이 되는데, null 체크 없이 .headerName을 호출하다 세션 생성을 시도 → 이미 응답이 시작된 후라 실패 → 500 에러로 이어진 흐름 수정

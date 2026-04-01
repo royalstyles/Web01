@@ -335,6 +335,24 @@
     color: var(--accent) !important;
 }
 
+/* ── 글쓰기 페이지 전용 ── */
+[data-theme="dark"] .btn-video {
+    background: var(--surface-2) !important;
+    color: var(--text-body) !important;
+    border-color: var(--border) !important;
+}
+[data-theme="dark"] .btn-video:hover {
+    background: var(--border) !important;
+}
+[data-theme="dark"] #video-progress { color: var(--text-muted) !important; }
+[data-theme="dark"] .btn-cancel {
+    background: var(--surface-2) !important;
+    color: var(--text-body) !important;
+}
+[data-theme="dark"] #editor-container {
+    border-color: var(--border) !important;
+}
+
 /* ── 스크롤바 (Webkit) ── */
 [data-theme="dark"] ::-webkit-scrollbar { width: 8px; height: 8px; }
 [data-theme="dark"] ::-webkit-scrollbar-track { background: var(--bg); }
