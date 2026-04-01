@@ -191,7 +191,7 @@
                         <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
                     </div>
                 </td>
-                <td class="hide-sm" th:text="${post.author.username}"></td>
+                <td class="num hide-sm" th:text="${post.author.username}"></td>
                 <td class="num hide-sm" th:text="${#temporals.format(post.createdAt, 'MM/dd')}"></td>
                 <td class="num" th:text="${post.viewCount}"></td>
                 <td class="num" th:text="${post.likeCount}">❤️</td>

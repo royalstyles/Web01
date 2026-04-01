@@ -249,6 +249,22 @@
 
 </div>
 
+<script>
+    // Quill.js 는 동영상을 <iframe class="ql-video"> 로 삽입하는데,
+    // Spring Security의 X-Frame-Options: DENY 헤더가 iframe 로딩을 차단하므로
+    // <video controls> 태그로 교체해서 HTML5 네이티브 플레이어로 재생
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('iframe.ql-video').forEach(function (iframe) {
+            const video = document.createElement('video');
+            video.src = iframe.src;
+            video.controls = true;
+            video.style.maxWidth = '100%';
+            video.style.borderRadius = '8px';
+            video.style.margin = '8px 0';
+            iframe.parentNode.replaceChild(video, iframe);
+        });
+    });
+</script>
 <script th:inline="javascript">
     // 비로그인 시 세션이 없어서 _csrf 객체가 null이 되는데, null 체크 없이 .headerName을 호출하다 세션 생성을 시도 → 이미 응답이 시작된 후라 실패 → 500 에러로 이어진 흐름 수정
     const csrfHeader = /*[[${_csrf != null ? _csrf.headerName : ''}]]*/ '';

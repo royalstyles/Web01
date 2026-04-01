@@ -10,6 +10,8 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.file.Paths;
+
 /**
  * Spring MVC 추가 설정 클래스
  * - 업로드 파일 정적 리소스 핸들러 등록 (/uploads/** → NAS 실제 디렉토리)
@@ -34,8 +36,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Paths.get().toUri() 로 OS 무관하게 올바른 file:/// URI 생성 (Windows 경로 호환)
+        String resourceLocation = Paths.get(uploadPath).toUri().toString();
+        if (!resourceLocation.endsWith("/")) {
+            resourceLocation += "/";
+        }
         registry.addResourceHandler(urlPrefix + "/**")
-                .addResourceLocations("file:" + uploadPath + "/");
+                .addResourceLocations(resourceLocation);
     }
 
     // ── 뒤로가기 캐시 방지 인터셉터 추가 ──────────────────
