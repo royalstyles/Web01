@@ -2,6 +2,13 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:fragment="headerStyles">
+        <!--
+            theme.js 를 가장 먼저 로드해 화면 깜빡임(FOUC) 방지
+            → HTML 파싱 직후 <html data-theme> 를 복원하므로 CSS 적용 전에 테마가 결정됨
+        -->
+        <script th:src="@{/js/theme.js}"></script>
+        <!-- 라이트/다크 모드 전역 CSS 변수 및 오버라이드 -->
+        <link rel="stylesheet" th:href="@{/css/theme.css}"/>
         <style>
             /* ── 공통 헤더 ── */
             .site-header {
@@ -146,6 +153,27 @@
                 border-color: rgba(255, 255, 255, .5);
             }
 
+            /* ── 다크/라이트 모드 토글 버튼 ── */
+            .theme-toggle-btn {
+                width: 34px;
+                height: 34px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, .12);
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background .2s;
+                flex-shrink: 0;
+                line-height: 1;
+            }
+
+            .theme-toggle-btn:hover {
+                background: rgba(255, 255, 255, .25);
+            }
+
             @media (max-width: 640px) {
                 .site-header {
                     padding: 0 16px;
@@ -199,6 +227,12 @@
 
     <!-- ── 오른쪽: rightMode 분기 ── -->
     <div class="header-right">
+
+        <!-- 다크/라이트 모드 토글 버튼 — 모든 모드에서 공통 표시 -->
+        <button id="theme-toggle-btn"
+                class="theme-toggle-btn"
+                onclick="toggleTheme()"
+                title="다크/라이트 모드 전환">🌙</button>
 
         <!-- ════ home 모드 (기본) ════ -->
         <th:block th:if="${rightMode == null or rightMode == 'home'}">

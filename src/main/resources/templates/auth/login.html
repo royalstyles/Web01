@@ -4,6 +4,9 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>로그인</title>
+    <!-- FOUC 방지: CSS 적용 전 data-theme 복원 -->
+    <script th:src="@{/js/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/theme.css}"/>
     <!--
         로그인 페이지 (auth/login.html)
         - Spring Security 의 폼 로그인 처리 URL: POST /auth/login

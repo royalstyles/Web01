@@ -1,0 +1,334 @@
+/*
+ * theme.css — 라이트/다크 모드 전역 스타일
+ *
+ * 동작 방식:
+ *   - <html data-theme="light|dark"> 속성으로 모드 전환
+ *   - CSS 변수(:root / [data-theme="dark"])로 색상 관리
+ *   - 각 템플릿의 인라인 <style>이 하드코딩된 색상을 쓰더라도,
+ *     아래 [data-theme="dark"] 오버라이드가 공통 클래스명을 덮어씀
+ *   - theme.js 가 페이지 로드 직후(스크립트 실행) data-theme 을 복원해
+ *     화면이 잠깐 반짝이는 현상(FOUC)을 방지
+ */
+
+/* ════════════════════════════════
+   라이트 모드 CSS 변수 (기본값)
+   ════════════════════════════════ */
+:root {
+    color-scheme: light;
+
+    /* 배경 */
+    --bg:           #f0f2f5;
+    --surface:      #ffffff;
+    --surface-2:    #f8fafc;
+
+    /* 테두리 */
+    --border:       #e2e8f0;
+    --border-light: #f1f5f9;
+
+    /* 텍스트 */
+    --text:         #1e1b4b;
+    --text-body:    #374151;
+    --text-muted:   #9ca3af;
+    --text-label:   #6b7280;
+
+    /* 포인트 색 */
+    --accent:       #4f46e5;
+    --accent-hover: #4338ca;
+
+    /* 배지 */
+    --badge-bg:     #ede9fe;
+    --badge-color:  #6d28d9;
+
+    /* 수정/삭제 버튼 */
+    --edit-bg:      #ede9fe;
+    --edit-color:   #6d28d9;
+    --del-bg:       #fee2e2;
+    --del-color:    #dc2626;
+
+    /* 알림 */
+    --alert-ok-bg:     #dcfce7;
+    --alert-ok-color:  #15803d;
+    --alert-ok-border: #bbf7d0;
+    --alert-err-bg:    #fee2e2;
+    --alert-err-color: #dc2626;
+    --alert-err-border:#fecaca;
+
+    /* 입력 필드 */
+    --input-bg:     #ffffff;
+    --input-border: #e2e8f0;
+
+    /* 그림자 */
+    --shadow-sm:    rgba(0,0,0,.06);
+    --shadow-md:    rgba(0,0,0,.10);
+}
+
+/* ════════════════════════════════
+   다크 모드 CSS 변수
+   ════════════════════════════════ */
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg:           #0f172a;
+    --surface:      #1e293b;
+    --surface-2:    #162032;
+
+    --border:       #334155;
+    --border-light: #243447;
+
+    --text:         #f1f5f9;
+    --text-body:    #cbd5e1;
+    --text-muted:   #64748b;
+    --text-label:   #94a3b8;
+
+    --accent:       #6366f1;
+    --accent-hover: #4f46e5;
+
+    --badge-bg:     #312e81;
+    --badge-color:  #a5b4fc;
+
+    --edit-bg:      #312e81;
+    --edit-color:   #a5b4fc;
+    --del-bg:       #450a0a;
+    --del-color:    #f87171;
+
+    --alert-ok-bg:     #052e16;
+    --alert-ok-color:  #4ade80;
+    --alert-ok-border: #166534;
+    --alert-err-bg:    #450a0a;
+    --alert-err-color: #f87171;
+    --alert-err-border:#991b1b;
+
+    --input-bg:     #1e293b;
+    --input-border: #334155;
+
+    --shadow-sm:    rgba(0,0,0,.25);
+    --shadow-md:    rgba(0,0,0,.45);
+}
+
+/* ════════════════════════════════
+   다크 모드 공통 오버라이드
+   (각 템플릿 인라인 CSS 를 덮어씀)
+   ════════════════════════════════ */
+
+/* ── 전환 애니메이션 ── */
+*, *::before, *::after {
+    transition: background-color .2s ease, border-color .2s ease, color .15s ease;
+}
+
+/* ── 페이지 배경 / 기본 텍스트 ── */
+[data-theme="dark"] body {
+    background: var(--bg) !important;
+    color: var(--text-body);
+}
+
+/* ── 카드 계열 ── */
+[data-theme="dark"] .table-card,
+[data-theme="dark"] .post-card,
+[data-theme="dark"] .comment-card,
+[data-theme="dark"] .filter-bar,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .write-card {
+    background: var(--surface) !important;
+    box-shadow: 0 2px 12px var(--shadow-sm) !important;
+}
+
+/* login/signup 의 .card */
+[data-theme="dark"] .card {
+    background: var(--surface) !important;
+    box-shadow: 0 4px 20px var(--shadow-md) !important;
+}
+[data-theme="dark"] .card h2 { color: var(--text) !important; }
+[data-theme="dark"] .card p  { color: var(--text-body) !important; }
+[data-theme="dark"] .card label { color: var(--text-label) !important; }
+
+/* ── 테이블 ── */
+[data-theme="dark"] thead th {
+    background: var(--surface-2) !important;
+    color: var(--text-label) !important;
+    border-bottom-color: var(--border) !important;
+}
+[data-theme="dark"] tbody td {
+    color: var(--text-body) !important;
+    border-bottom-color: var(--border-light) !important;
+}
+[data-theme="dark"] tbody tr:hover {
+    background: rgba(99,102,241,.06) !important;
+}
+
+/* ── 구분선 ── */
+[data-theme="dark"] .table-top,
+[data-theme="dark"] .post-header,
+[data-theme="dark"] .post-actions,
+[data-theme="dark"] .comment-header,
+[data-theme="dark"] .comment-input-wrap,
+[data-theme="dark"] .comment-item {
+    border-color: var(--border-light) !important;
+}
+
+/* ── 제목 / 텍스트 ── */
+[data-theme="dark"] .table-top h3,
+[data-theme="dark"] .post-title,
+[data-theme="dark"] .board-header h1,
+[data-theme="dark"] .comment-header h3,
+[data-theme="dark"] .comment-author,
+[data-theme="dark"] .page-title h2,
+[data-theme="dark"] .section-title {
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] .meta,
+[data-theme="dark"] td.num,
+[data-theme="dark"] .post-meta,
+[data-theme="dark"] .comment-time,
+[data-theme="dark"] .total-count,
+[data-theme="dark"] .table-top-left {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .table-top-left strong { color: var(--text) !important; }
+
+/* ── 링크 ── */
+[data-theme="dark"] .post-title a { color: var(--text) !important; }
+[data-theme="dark"] .post-title a:hover { color: var(--accent) !important; }
+[data-theme="dark"] .back-link { color: var(--text-muted) !important; }
+[data-theme="dark"] .back-link:hover { color: var(--accent) !important; }
+
+/* ── 배지 ── */
+[data-theme="dark"] .badge-cat,
+[data-theme="dark"] .post-category {
+    background: var(--badge-bg) !important;
+    color: var(--badge-color) !important;
+}
+
+/* ── 카테고리 필터 버튼 ── */
+[data-theme="dark"] .cat-btn {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-label) !important;
+}
+[data-theme="dark"] .cat-btn:hover,
+[data-theme="dark"] .cat-btn.active {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+}
+
+/* ── 입력 필드 ── */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] .search-wrap input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-body) !important;
+}
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* ── 페이징 ── */
+[data-theme="dark"] .page-btn {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-body) !important;
+}
+[data-theme="dark"] .page-btn:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+[data-theme="dark"] .page-btn.active {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #fff !important;
+}
+[data-theme="dark"] .page-btn.disabled { color: var(--text-muted) !important; }
+
+/* ── 수정/삭제 버튼 ── */
+[data-theme="dark"] .btn-edit,
+[data-theme="dark"] .btn-cm-edit {
+    background: var(--edit-bg) !important;
+    color: var(--edit-color) !important;
+}
+[data-theme="dark"] .btn-delete,
+[data-theme="dark"] .btn-cm-delete {
+    background: var(--del-bg) !important;
+    color: var(--del-color) !important;
+}
+
+/* ── 좋아요 버튼 ── */
+[data-theme="dark"] .like-btn {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-body) !important;
+}
+[data-theme="dark"] .like-btn.liked {
+    background: var(--del-bg) !important;
+    border-color: var(--del-color) !important;
+    color: var(--del-color) !important;
+}
+
+/* ── 알림 ── */
+[data-theme="dark"] .alert-success {
+    background: var(--alert-ok-bg) !important;
+    color: var(--alert-ok-color) !important;
+    border-color: var(--alert-ok-border) !important;
+}
+[data-theme="dark"] .alert-error {
+    background: var(--alert-err-bg) !important;
+    color: var(--alert-err-color) !important;
+    border-color: var(--alert-err-border) !important;
+}
+
+/* ── 댓글 ── */
+[data-theme="dark"] .comment-avatar { background: var(--accent) !important; }
+[data-theme="dark"] .comment-text   { color: var(--text-body) !important; }
+
+/* ── 빈 목록 메시지 ── */
+[data-theme="dark"] .empty { color: var(--text-muted) !important; }
+
+/* ── Quill 에디터 (글쓰기 폼) ── */
+[data-theme="dark"] .ql-toolbar.ql-snow {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+}
+[data-theme="dark"] .ql-container.ql-snow {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-body) !important;
+}
+[data-theme="dark"] .ql-editor { color: var(--text-body) !important; }
+[data-theme="dark"] .ql-editor.ql-blank::before { color: var(--text-muted) !important; }
+[data-theme="dark"] .ql-snow .ql-stroke { stroke: var(--text-label) !important; }
+[data-theme="dark"] .ql-snow .ql-fill   { fill:   var(--text-label) !important; }
+[data-theme="dark"] .ql-snow .ql-picker  { color: var(--text-label) !important; }
+[data-theme="dark"] .ql-snow .ql-picker-options {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+/* ── 프로필 섹션 카드 ── */
+[data-theme="dark"] .section-card {
+    background: var(--surface) !important;
+    border-color: var(--border-light) !important;
+}
+[data-theme="dark"] .form-label,
+[data-theme="dark"] .profile-label { color: var(--text-label) !important; }
+[data-theme="dark"] .current-val   { color: var(--text-muted) !important; }
+
+/* ── 관리자 통계 카드 ── */
+[data-theme="dark"] .stat-label { color: var(--text-label) !important; }
+[data-theme="dark"] .stat-value { color: var(--text) !important; }
+[data-theme="dark"] .stat-icon  {
+    background: rgba(99,102,241,.15) !important;
+    color: var(--accent) !important;
+}
+
+/* ── 스크롤바 (Webkit) ── */
+[data-theme="dark"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: var(--bg); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
