@@ -4,6 +4,14 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title th:text="${post != null} ? '게시글 수정' : '게시글 작성'">게시글 작성</title>
+    <!--
+        게시글 작성/수정 공용 페이지 (board/board-write.html)
+        - post 모델 속성이 null 이면 신규 작성 폼, 있으면 수정 폼으로 동작
+        - Quill.js 리치 텍스트 에디터를 사용해 이미지/동영상 첨부 가능
+        - 이미지: POST /api/upload/image, 동영상: POST /api/upload/video 로 먼저 업로드 후 URL 삽입
+        - 폼 제출 시 Quill 에디터 HTML 을 hidden input(content) 에 복사해 전송
+        - 수정 모드: 기존 본문 HTML 을 Quill.setContents() 로 로드
+    -->
     <!-- Quill.js CDN -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet"/>
     <style>

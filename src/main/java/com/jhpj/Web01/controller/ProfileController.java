@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * 프로필 관리 컨트롤러 — /profile/** 경로 처리
+ * 로그인한 사용자 본인의 프로필 이미지/아이디/비밀번호/이메일 변경을 처리
+ * 모든 /profile/** 경로는 SecurityConfig 에서 인증 필수로 설정
+ * 아이디 변경 시 세션 무효화 후 재로그인 유도, 이메일 변경 시 인증 메일 발송
+ */
 @Controller
 @RequestMapping("/profile")
 @RequiredArgsConstructor

@@ -16,6 +16,9 @@
     </style>
 </head>
 <body>
+<!-- 이메일 변경 인증 결과 페이지 -->
+<!-- ProfileController.verifyEmailChange() 에서 토큰 검증 후 success/msg 를 Model 에 담아 렌더링 -->
+<!-- 성공 시 홈으로, 실패 시 프로필 페이지로 이동하는 버튼 표시 -->
 <div class="card">
     <div class="icon" th:text="${success} ? '✅' : '❌'"></div>
     <p th:text="${msg}"></p>

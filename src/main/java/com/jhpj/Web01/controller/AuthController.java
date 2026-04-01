@@ -15,14 +15,19 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Optional;
 
+/**
+ * 인증 관련 컨트롤러 — 로그인/회원가입/이메일 인증 처리
+ * 로그인 처리 자체는 Spring Security 가 담당하며, 여기서는 UI 렌더링과 회원가입/이메일 인증만 처리
+ * 모든 /auth/** 경로는 SecurityConfig 에서 permitAll 로 공개 설정
+ */
 @Controller
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final CustomUserDetailsService userDetailsService;
-    private final EmailVerificationTokenRepository tokenRepository;  // ✅ 추가
-    private final UserRepository userRepository;                     // ✅ 추가
+    private final EmailVerificationTokenRepository tokenRepository;  // 이메일 인증 토큰 조회/삭제용
+    private final UserRepository userRepository;                     // 인증 완료 후 사용자 상태 업데이트용
 
     /** 로그인 페이지 */
     @GetMapping("/login")

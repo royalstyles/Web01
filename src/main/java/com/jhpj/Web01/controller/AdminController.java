@@ -17,6 +17,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * 관리자 대시보드 컨트롤러 — /admin/** 경로 처리
+ * ROLE_ADMIN 권한이 있는 사용자만 접근 가능 (SecurityConfig 에서 hasRole("ADMIN") 설정)
+ * 회원 목록/통계 표시, 권한 변경, 회원 삭제, 계정 잠금 해제, 이메일 인증 강제 완료 처리
+ * 게시판 카테고리 추가/수정/삭제도 이 컨트롤러에서 담당
+ */
 @Controller
 @RequestMapping("/admin")
 @RequiredArgsConstructor
@@ -25,7 +31,7 @@ public class AdminController {
     private final UserRepository userRepository;
     private final AdminService adminService;
     private final LoginAttemptService loginAttemptService;
-    private final CategoryRepository categoryRepository;  // 추가
+    private final CategoryRepository categoryRepository;
 
     /** 대시보드 */
     @GetMapping

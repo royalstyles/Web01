@@ -8,12 +8,18 @@ import org.springframework.beans.factory.annotation.Value;
 
 import jakarta.mail.internet.MimeMessage;
 
+/**
+ * 이메일 발송 서비스
+ * application-secret.properties 의 spring.mail.* 설정으로 Gmail SMTP 를 사용
+ * 회원가입 인증 메일과 이메일 변경 인증 메일 두 가지 유형을 발송
+ */
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
     private final JavaMailSender mailSender;
 
+    /** 발신자 주소 — application-secret.properties 의 spring.mail.username */
     @Value("${spring.mail.username}")
     private String fromEmail;
 

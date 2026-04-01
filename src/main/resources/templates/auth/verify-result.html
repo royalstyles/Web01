@@ -15,6 +15,9 @@
     </style>
 </head>
 <body>
+<!-- 회원가입 이메일 인증 결과 페이지 -->
+<!-- AuthController.verifyEmail() 에서 토큰 검증 후 success/msg 를 Model 에 담아 렌더링 -->
+<!-- success=true 이면 인증 완료 아이콘, false 이면 오류 아이콘 표시 -->
 <div class="card">
     <div class="icon" th:text="${success} ? '✅' : '❌'"></div>
     <p th:text="${msg}" style="color:#444; font-size:16px;"></p>

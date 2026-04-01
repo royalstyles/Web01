@@ -15,15 +15,20 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Spring Security 의 UserDetailsService 구현체
+ * 로그인 시 Spring Security 가 loadUserByUsername() 을 호출해 인증 처리
+ * 회원가입(register) 및 이메일 인증 토큰 발급도 이 서비스에서 담당
+ */
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final LoginAttemptService loginAttemptService; // ✅ 추가
-    private final EmailVerificationTokenRepository tokenRepository;  // ✅ 추가
-    private final EmailService emailService;                         // ✅ 추가
+    private final LoginAttemptService loginAttemptService; // 로그인 실패 횟수/잠금 관리
+    private final EmailVerificationTokenRepository tokenRepository;  // 인증 토큰 저장
+    private final EmailService emailService;                         // 인증 메일 발송
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

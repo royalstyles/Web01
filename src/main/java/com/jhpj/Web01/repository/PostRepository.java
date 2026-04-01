@@ -7,29 +7,37 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/**
+ * 게시글 데이터 접근 레이어 — Spring Data JPA 자동 구현
+ * 모든 목록 조회 쿼리에 LEFT JOIN FETCH p.author, p.category 를 포함해
+ * 게시글 목록 렌더링 시 발생하는 N+1 쿼리 문제를 방지
+ */
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // 기존 메서드들을 아래처럼 교체
+    /** 전체 게시글 목록 — 최신순, 작성자/카테고리 FETCH JOIN */
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category ORDER BY p.createdAt DESC")
     Page<Post> findAllWithDetails(Pageable pageable);
 
+    /** 특정 카테고리의 게시글 목록 — 최신순 */
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.category.id = :categoryId ORDER BY p.createdAt DESC")
     Page<Post> findByCategoryWithDetails(@Param("categoryId") Long categoryId, Pageable pageable);
 
+    /** 제목 키워드 검색 (대소문자 무시) */
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE UPPER(p.title) LIKE UPPER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
     Page<Post> findByKeywordWithDetails(@Param("keyword") String keyword, Pageable pageable);
 
+    /** 카테고리 + 제목 키워드 복합 검색 */
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.category.id = :categoryId AND UPPER(p.title) LIKE UPPER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
     Page<Post> findByCategoryAndKeywordWithDetails(@Param("categoryId") Long categoryId, @Param("keyword") String keyword, Pageable pageable);
 
-    // 작성자별 게시글 수
+    /** 작성자별 게시글 수 — 프로필/관리자 통계에 사용 */
     long countByAuthorUsername(String username);
 
-    // 내가 쓴 글 목록 조회 (작성자 기준, 페이징)
+    /** 내가 쓴 글 목록 조회 — 특정 작성자의 게시글만 최신순으로 반환 (MyPostsController 에서 사용) */
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.author.username = :username ORDER BY p.createdAt DESC")
     Page<Post> findByAuthorUsernameWithDetails(@Param("username") String username, Pageable pageable);
 
-    // fetch join — 목록 조회 시 author, category N+1 방지
+    /** 게시글 상세 조회 — 작성자/카테고리 FETCH JOIN 으로 Lazy 로딩 없이 한 번에 조회 */
     @Query("SELECT p FROM Post p " +
             "LEFT JOIN FETCH p.author " +
             "LEFT JOIN FETCH p.category " +

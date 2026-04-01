@@ -4,6 +4,13 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>게시판</title>
+    <!--
+        게시판 목록 페이지 (board/board-list.html)
+        - /board 경로 진입 시 표시되는 전체 게시글 목록 화면
+        - 카테고리 필터, 제목 키워드 검색, 10개 단위 페이징 지원
+        - 비로그인 사용자도 조회 가능 / 글쓰기 버튼 클릭 시 로그인 페이지로 이동
+        - Model 속성: posts, postPage, categories, categoryId, keyword, currentPage, currentBoardName
+    -->
     <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

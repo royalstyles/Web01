@@ -12,6 +12,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+/**
+ * 홈/메인 페이지 컨트롤러
+ * 루트 경로(/) 를 /home 으로 리다이렉트하고, /home 에서 게시글 목록을 표시
+ * 로그인/비로그인 사용자 모두 접근 가능 (SecurityConfig 에서 permitAll 설정)
+ */
 @Controller
 @RequiredArgsConstructor
 public class HomeController {
@@ -19,11 +24,16 @@ public class HomeController {
     private final UserRepository userRepository;
     private final BoardService boardService;
 
+    /** 루트 경로 접근 시 /home 으로 리다이렉트 */
     @GetMapping("/")
     public String root() {
         return "redirect:/home";
     }
 
+    /**
+     * 홈 화면 — 카테고리 필터, 키워드 검색, 페이징을 지원하는 게시글 목록
+     * 로그인 여부에 따라 헤더 표시 내용이 달라지므로 userDetails 가 null 일 수 있음
+     */
     @GetMapping("/home")
     public String home(@AuthenticationPrincipal UserDetails userDetails,
                        @RequestParam(required = false) Long categoryId,

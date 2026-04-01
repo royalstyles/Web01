@@ -4,6 +4,15 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>관리자 대시보드</title>
+    <!--
+        관리자 대시보드 페이지 (admin.html)
+        - ROLE_ADMIN 권한이 있는 사용자만 접근 가능 (/admin/** hasRole ADMIN)
+        - 통계 카드: 전체 회원/관리자/미인증/잠금 수 표시
+        - 회원 테이블: 권한 변경, 계정 잠금 해제, 이메일 인증 강제 완료, 회원 삭제
+        - 카테고리 관리: 추가/수정/삭제 (카테고리 삭제 시 게시글은 미분류 유지)
+        - 자기 자신에 대한 권한 변경/삭제는 guardSelf() 에서 차단
+        - Model 속성: users, totalUsers, adminCount, unverifiedCount, lockedCount, lockedIds, categories
+    -->
     <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

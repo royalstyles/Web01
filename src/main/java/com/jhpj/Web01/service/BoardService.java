@@ -11,6 +11,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 게시판 핵심 비즈니스 로직 서비스
+ * 게시글 CRUD, 댓글 CRUD, 좋아요 토글, 카테고리 조회, 내 글 목록 조회를 담당
+ * 모든 쓰기 작업은 @Transactional, 조회 작업은 @Transactional(readOnly = true) 적용
+ */
 @Service
 @RequiredArgsConstructor
 public class BoardService {
@@ -23,7 +28,7 @@ public class BoardService {
     private final FileService fileService;
 
     // Quill.js 본문 HTML에서 storedName 추출용 패턴
-    // /uploads/images/uuid.jpg  또는  /uploads/videos/uuid.mp4
+    // 예) /uploads/images/uuid.jpg → "uuid.jpg",  /uploads/videos/uuid.mp4 → "uuid.mp4"
     private static final Pattern FILE_URL_PATTERN =
             Pattern.compile("/uploads/(?:images|videos)/([^\"'\\s]+)");
 

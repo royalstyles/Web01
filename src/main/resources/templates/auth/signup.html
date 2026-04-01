@@ -4,6 +4,13 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>회원가입</title>
+    <!--
+        회원가입 페이지 (auth/signup.html)
+        - POST /auth/signup 으로 아이디/비밀번호/이메일 전송
+        - 비밀번호 정책: 8자 이상, 영문+숫자+특수문자 조합 (PasswordValidator 에서 검증)
+        - 가입 성공 시 이메일로 인증 링크 발송 → 클릭 후 로그인 가능 (emailVerified = true)
+        - 에러 메시지는 FlashAttribute(errorMsg) 로 전달
+    -->
     <style>
         /* login.html 스타일 동일 적용 */
         * { box-sizing: border-box; margin: 0; padding: 0; }

@@ -1,9 +1,14 @@
 package com.jhpj.Web01.util;
 
+/**
+ * 비밀번호 정책 검증 유틸리티
+ * 회원가입(CustomUserDetailsService.register) 과 비밀번호 변경(ProfileService.changePassword) 에서 사용
+ * 정적 메서드로 구성되어 있어 스프링 빈으로 등록하지 않고 직접 호출
+ */
 public class PasswordValidator {
 
     /**
-     * 비밀번호 정책 검증
+     * 비밀번호 정책 검증 — 아래 조건 모두 통과 시 null 반환 (통과), 실패 시 오류 메시지 반환
      * - 최소 8자 이상
      * - 영문 + 숫자 + 특수문자 조합
      */

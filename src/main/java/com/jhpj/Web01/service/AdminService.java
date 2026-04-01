@@ -9,6 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 관리자 기능 서비스
+ * 회원 권한 변경, 회원 삭제, 계정 잠금 해제, 이메일 인증 강제 완료를 처리
+ * 게시판 카테고리 추가/수정/삭제도 담당 (AdminController 에서 호출)
+ */
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -16,7 +21,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final EmailVerificationTokenRepository tokenRepository;
     private final LoginAttemptService loginAttemptService;
-    private final CategoryRepository categoryRepository;  // 추가
+    private final CategoryRepository categoryRepository;
 
     /** 권한 토글: ROLE_USER ↔ ROLE_ADMIN */
     @Transactional

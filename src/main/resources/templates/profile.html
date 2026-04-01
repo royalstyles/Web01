@@ -4,6 +4,13 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>프로필 수정</title>
+    <!--
+        프로필 관리 페이지 (profile.html)
+        - 로그인한 사용자 본인만 접근 가능 (/profile/** 인증 필수)
+        - 프로필 이미지 변경/삭제, 아이디 변경(재로그인 필요), 비밀번호 변경, 이메일 변경(인증 메일) 기능 제공
+        - 각 섹션이 독립된 <form> 으로 구성되어 개별 POST 요청으로 처리
+        - Model 속성: user (User 엔티티), isLoggedIn, username, isAdmin
+    -->
     <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

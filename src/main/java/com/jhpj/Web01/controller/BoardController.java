@@ -17,12 +17,17 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 게시판 컨트롤러 — /board/** 경로 처리
+ * 게시글 목록/상세/작성/수정/삭제 처리 (동기 방식)
+ * 댓글 등록/수정/삭제 및 좋아요 토글은 AJAX 요청으로 처리 (ResponseEntity 반환)
+ * 비로그인 사용자는 목록/상세 조회만 가능하며, 나머지는 SecurityConfig 에서 인증 필요로 설정
+ */
 @Controller
 @RequestMapping("/board")
 @RequiredArgsConstructor
 public class BoardController {
 
-    // 필드 추가
     private final BoardService boardService;
     private final UserRepository userRepository;
 

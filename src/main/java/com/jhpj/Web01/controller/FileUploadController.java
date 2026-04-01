@@ -14,6 +14,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
+/**
+ * 파일 업로드 REST 컨트롤러 — /api/upload/** 경로 처리
+ * Quill.js 에디터에서 이미지/동영상을 첨부할 때 비동기로 호출
+ * 업로드된 파일은 임시 상태(post_id = null)로 저장되며,
+ * 게시글 저장 시 BoardService.createPost() 내부에서 실제 게시글에 연결됨
+ * SecurityConfig 에서 /api/upload/** 는 인증 필수로 설정
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/upload")

@@ -4,6 +4,14 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>내가 쓴 글</title>
+    <!--
+        내가 쓴 글 관리 페이지 (my-posts.html)
+        - 로그인한 사용자 본인이 작성한 게시글 목록을 최신순으로 표시 (15개/페이지)
+        - 각 행에서 수정 버튼(→ /board/{id}/edit) 과 삭제 버튼(POST /my-posts/{id}/delete) 제공
+        - 삭제 시 confirm 다이얼로그 표시 후 CSRF 토큰과 함께 폼 제출
+        - 삭제 후 현재 페이지 번호를 유지해 목록 위치 복귀
+        - Model 속성: posts, postPage, currentPage
+    -->
     <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

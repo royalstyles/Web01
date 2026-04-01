@@ -4,6 +4,13 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>로그인</title>
+    <!--
+        로그인 페이지 (auth/login.html)
+        - Spring Security 의 폼 로그인 처리 URL: POST /auth/login
+        - error 파라미터: 로그인 실패 메시지 표시 (아이디/비밀번호 불일치, 계정 잠금, 미인증)
+        - 아이디 기억하기: 로컬스토리지에 username 저장 후 다음 방문 시 자동 입력
+        - CSRF 토큰은 Thymeleaf 폼에서 th:action 사용 시 자동 삽입
+    -->
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5;

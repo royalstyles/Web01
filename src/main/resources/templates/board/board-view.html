@@ -4,6 +4,14 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title th:text="${post.title}">게시글</title>
+    <!--
+        게시글 상세 페이지 (board/board-view.html)
+        - 게시글 본문(Quill HTML), 댓글 목록, 좋아요 버튼 표시
+        - 댓글 등록/수정/삭제 및 좋아요는 fetch API 로 비동기 처리 (CSRF 토큰 포함)
+        - 본문은 Quill.js 의 .ql-editor 클래스를 통해 HTML 을 그대로 렌더링
+        - canEdit: 작성자 본인 또는 관리자일 때 true → 수정/삭제 버튼 표시
+        - Model 속성: post, comments, liked, canEdit, currentUsername
+    -->
     <!-- Quill 뷰어 스타일 (에디터 없이 렌더링용) -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet"/>
     <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>

@@ -10,13 +10,21 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Spring MVC 추가 설정 클래스
+ * - 업로드 파일 정적 리소스 핸들러 등록 (/uploads/** → NAS 실제 디렉토리)
+ * - 뒤로가기 캐시 방지 인터셉터 등록 (게시판 목록/홈 경로)
+ * - @EnableScheduling 으로 FileService 의 고아 파일 정리 스케줄러 활성화
+ */
 @Configuration
 @EnableScheduling   // FileService 고아 파일 정리 스케줄러 활성화
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    /** 파일이 실제 저장된 서버 절대 경로 — application.properties 의 app.upload.path */
     @Value("${app.upload.path}")
     private String uploadPath;
 
+    /** URL 접두사 — application.properties 의 app.upload.url-prefix (기본: /uploads) */
     @Value("${app.upload.url-prefix}")
     private String urlPrefix;
 

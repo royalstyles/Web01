@@ -5,7 +5,13 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <title>홈 — Web01</title>
-    <!-- 헤더 스타일 추가 -->
+    <!--
+        홈 페이지 (home.html)
+        - 카테고리 필터 + 키워드 검색 + 페이징이 포함된 게시글 목록 화면
+        - 비로그인 사용자도 접근 가능 (공개 페이지)
+        - Model 속성: posts, postPage, categories, categoryId, keyword, currentPage,
+                      isLoggedIn, username, isAdmin, profileImage, currentCategoryName
+    -->
     <th:block th:replace="~{fragments/header :: headerStyles}"></th:block>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

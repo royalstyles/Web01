@@ -16,6 +16,11 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * 프로필 관리 서비스
+ * 로그인한 사용자 본인의 아이디/비밀번호/이메일/프로필 이미지 변경을 처리
+ * 이메일 변경은 새 이메일로 인증 링크를 발송하고 클릭 후 완료되는 2단계 방식
+ */
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
@@ -26,6 +31,7 @@ public class ProfileService {
     private final EmailService emailService;
     private final FileService fileService;
 
+    /** username 으로 사용자 조회 — 없으면 IllegalArgumentException */
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));

@@ -18,6 +18,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 파일 업로드/삭제 서비스
+ * Quill.js 에디터에서 삽입하는 이미지/동영상과 프로필 이미지를 처리
+ * 파일은 app.upload.path 디렉토리에 UUID 파일명으로 저장되며 DB 에 메타데이터 기록
+ * 게시글 작성 취소 또는 1시간 이상 미연결 임시 파일은 스케줄러(cleanOrphanFiles)로 자동 삭제
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,9 +31,11 @@ public class FileService {
 
     private final PostFileRepository postFileRepository;
 
+    /** 파일 저장 루트 경로 — application.properties 의 app.upload.path */
     @Value("${app.upload.path}")
     private String uploadPath;
 
+    /** URL 접두사 — application.properties 의 app.upload.url-prefix (기본: /uploads) */
     @Value("${app.upload.url-prefix}")
     private String urlPrefix;
 

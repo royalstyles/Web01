@@ -11,6 +11,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.authentication.DisabledException;
 
+/**
+ * Spring Security 보안 설정 클래스
+ * - 경로별 접근 권한 정의 (공개/인증 필요/관리자 전용)
+ * - 폼 로그인 / 로그아웃 동작 설정
+ * - 로그인 실패 횟수 추적 및 계정 잠금 처리 (LoginAttemptService 연동)
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -19,12 +25,19 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final LoginAttemptService loginAttemptService;
 
+    /**
+     * AuthenticationManager 빈 직접 노출 — 컨트롤러/서비스에서 직접 인증이 필요할 때 주입
+     */
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * HTTP 보안 규칙 정의 — 경로별 접근 권한, 로그인/로그아웃 설정
+     * 구체적인 경로 패턴을 먼저 선언하고 와일드카드 패턴을 나중에 선언해야 의도대로 동작
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
