@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/board/write", "/board/*/edit", "/board/*/delete",
                                 "/board/*/comments", "/board/comments/**",
                                 "/board/*/like", "/api/upload/**",
-                                "/profile/**"
+                                "/profile/**", "/my-posts/**"
                         ).authenticated()
 
                         // 2. 공개 허용

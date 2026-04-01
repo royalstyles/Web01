@@ -25,6 +25,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 작성자별 게시글 수
     long countByAuthorUsername(String username);
 
+    // 내가 쓴 글 목록 조회 (작성자 기준, 페이징)
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.author.username = :username ORDER BY p.createdAt DESC")
+    Page<Post> findByAuthorUsernameWithDetails(@Param("username") String username, Pageable pageable);
+
     // fetch join — 목록 조회 시 author, category N+1 방지
     @Query("SELECT p FROM Post p " +
             "LEFT JOIN FETCH p.author " +

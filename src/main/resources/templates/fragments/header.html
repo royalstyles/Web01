@@ -217,6 +217,7 @@
                         <span class="header-role" th:text="${isAdmin} ? '관리자' : '일반 회원'"></span>
                     </div>
                 </div>
+                <a th:href="@{/my-posts}" class="header-btn">📝 내 글 관리</a>
                 <a th:href="@{/profile}" class="header-btn">⚙️ 프로필</a>
                 <a th:if="${isAdmin}" th:href="@{/admin}" class="header-btn">👑 관리자</a>
                 <form th:action="@{/auth/logout}" method="post" style="display:inline;">

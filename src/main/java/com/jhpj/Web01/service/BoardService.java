@@ -131,6 +131,14 @@ public class BoardService {
         postRepository.delete(post);
     }
 
+    // ── 내가 쓴 글 목록 ──────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Page<Post> getMyPosts(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 15);
+        return postRepository.findByAuthorUsernameWithDetails(username, pageable);
+    }
+
     // ── 댓글 ────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
