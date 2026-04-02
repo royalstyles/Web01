@@ -36,6 +36,7 @@ public class BoardController {
     @GetMapping
     public String list(@RequestParam(required = false) Long categoryId,
                        @RequestParam(required = false) String keyword,
+                       @RequestParam(required = false) String searchType,
                        @RequestParam(defaultValue = "0") int page,
                        @AuthenticationPrincipal UserDetails userDetails,
                        Model model) {
@@ -43,13 +44,14 @@ public class BoardController {
         // ── 헤더 프래그먼트용 로그인 정보 주입 ──
         addHeaderAttributes(userDetails, model);
 
-        Page<Post> postPage = boardService.getPostList(categoryId, keyword, page);
+        Page<Post> postPage = boardService.getPostList(categoryId, keyword, searchType, page);
 
-        model.addAttribute("posts",      postPage.getContent());
-        model.addAttribute("postPage",   postPage);
-        model.addAttribute("categories", boardService.findAllCategories());
-        model.addAttribute("categoryId", categoryId);
-        model.addAttribute("keyword",    keyword);
+        model.addAttribute("posts",       postPage.getContent());
+        model.addAttribute("postPage",    postPage);
+        model.addAttribute("categories",  boardService.findAllCategories());
+        model.addAttribute("categoryId",  categoryId);
+        model.addAttribute("keyword",     keyword);
+        model.addAttribute("searchType",  searchType);
         model.addAttribute("currentPage", page);
 
         // ── 현재 카테고리명 (헤더 표시용) ── 추가

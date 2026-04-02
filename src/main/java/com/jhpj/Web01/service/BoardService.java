@@ -40,22 +40,43 @@ public class BoardService {
 
     // ── 게시글 목록 ──────────────────────────────────────────
 
+    /**
+     * 게시글 목록 조회 — 카테고리 필터, 검색 타입별 키워드 검색, 페이징 지원
+     *
+     * @param searchType 검색 타입: "title"(제목), "user"(작성자), "titleContent"(제목+본문)
+     *                   null 또는 빈 값이면 "title"로 동작
+     */
     @Transactional(readOnly = true)
-    public Page<Post> getPostList(Long categoryId, String keyword, int page) {
+    public Page<Post> getPostList(Long categoryId, String keyword, String searchType, int page) {
         Pageable pageable = PageRequest.of(page, 10);  // 정렬은 쿼리에 포함
 
         boolean hasCategory = categoryId != null;
         boolean hasKeyword  = keyword != null && !keyword.isBlank();
 
-        if (hasCategory && hasKeyword) {
-            return postRepository.findByCategoryAndKeywordWithDetails(categoryId, keyword, pageable);
-        } else if (hasCategory) {
-            return postRepository.findByCategoryWithDetails(categoryId, pageable);
-        } else if (hasKeyword) {
-            return postRepository.findByKeywordWithDetails(keyword, pageable);
-        } else {
-            return postRepository.findAllWithDetails(pageable);
+        // 키워드 없으면 검색 타입 무관하게 전체/카테고리 조회
+        if (!hasKeyword) {
+            return hasCategory
+                    ? postRepository.findByCategoryWithDetails(categoryId, pageable)
+                    : postRepository.findAllWithDetails(pageable);
         }
+
+        // 검색 타입 기본값: title
+        String type = (searchType == null || searchType.isBlank()) ? "title" : searchType;
+
+        return switch (type) {
+            // 작성자 이름 검색
+            case "user" -> hasCategory
+                    ? postRepository.findByCategoryAndAuthorKeywordWithDetails(categoryId, keyword, pageable)
+                    : postRepository.findByAuthorKeywordWithDetails(keyword, pageable);
+            // 제목 + 본문 통합 검색
+            case "titleContent" -> hasCategory
+                    ? postRepository.findByCategoryAndTitleOrContentKeywordWithDetails(categoryId, keyword, pageable)
+                    : postRepository.findByTitleOrContentKeywordWithDetails(keyword, pageable);
+            // 기본: 제목 검색
+            default -> hasCategory
+                    ? postRepository.findByCategoryAndKeywordWithDetails(categoryId, keyword, pageable)
+                    : postRepository.findByKeywordWithDetails(keyword, pageable);
+        };
     }
 
     // ── 게시글 상세 ──────────────────────────────────────────

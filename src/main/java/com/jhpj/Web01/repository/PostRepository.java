@@ -30,6 +30,27 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.category.id = :categoryId AND UPPER(p.title) LIKE UPPER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
     Page<Post> findByCategoryAndKeywordWithDetails(@Param("categoryId") Long categoryId, @Param("keyword") String keyword, Pageable pageable);
 
+    /** 작성자 이름 키워드 검색 (대소문자 무시) */
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE UPPER(p.author.username) LIKE UPPER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
+    Page<Post> findByAuthorKeywordWithDetails(@Param("keyword") String keyword, Pageable pageable);
+
+    /** 카테고리 + 작성자 이름 복합 검색 */
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.category.id = :categoryId AND UPPER(p.author.username) LIKE UPPER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
+    Page<Post> findByCategoryAndAuthorKeywordWithDetails(@Param("categoryId") Long categoryId, @Param("keyword") String keyword, Pageable pageable);
+
+    /**
+     * 제목+본문 키워드 검색
+     * - 제목: UPPER() 적용해 대소문자 무시
+     * - 본문(CLOB): Hibernate 6에서 UPPER()를 CLOB에 적용 불가 → plain LIKE 사용
+     *   (한국어 콘텐츠는 대소문자 구분 없으므로 실사용상 문제없음)
+     */
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE UPPER(p.title) LIKE UPPER(CONCAT('%', :keyword, '%')) OR p.content LIKE CONCAT('%', :keyword, '%') ORDER BY p.createdAt DESC")
+    Page<Post> findByTitleOrContentKeywordWithDetails(@Param("keyword") String keyword, Pageable pageable);
+
+    /** 카테고리 + 제목+본문 복합 검색 */
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.category.id = :categoryId AND (UPPER(p.title) LIKE UPPER(CONCAT('%', :keyword, '%')) OR p.content LIKE CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
+    Page<Post> findByCategoryAndTitleOrContentKeywordWithDetails(@Param("categoryId") Long categoryId, @Param("keyword") String keyword, Pageable pageable);
+
     /** 작성자별 게시글 수 — 프로필/관리자 통계에 사용 */
     long countByAuthorUsername(String username);
 

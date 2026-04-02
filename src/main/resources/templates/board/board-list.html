@@ -55,9 +55,16 @@
         .search-wrap { display: flex; gap: 8px; margin-left: auto; }
         .search-wrap input {
             padding: 7px 14px; border: 1px solid #e2e8f0; border-radius: 8px;
-            font-size: 14px; width: 220px;
+            font-size: 14px; width: 200px;
         }
         .search-wrap input:focus { outline: none; border-color: #4f46e5; }
+        /* 검색 타입 드롭다운 */
+        .search-type-select {
+            padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px;
+            font-size: 13px; background: white; color: #374151;
+            cursor: pointer; flex-shrink: 0;
+        }
+        .search-type-select:focus { outline: none; border-color: #4f46e5; }
         .btn-search {
             padding: 7px 18px; background: #4f46e5; color: white;
             border: none; border-radius: 8px; font-size: 14px; cursor: pointer;
@@ -136,7 +143,8 @@
         .page-btn.disabled { color: #d1d5db; pointer-events: none; }
 
         @media (max-width: 640px) {
-            .search-wrap { margin-left: 0; width: 100%; }
+            .search-wrap { margin-left: 0; width: 100%; flex-wrap: wrap; }
+            .search-type-select { width: 100%; }
             .search-wrap input { flex: 1; }
             th.hide-sm, td.hide-sm { display: none; }
         }
@@ -162,7 +170,13 @@
 
         <form class="search-wrap" th:action="@{/board}" method="get">
             <input th:if="${categoryId != null}" type="hidden" name="categoryId" th:value="${categoryId}"/>
-            <input type="text" name="keyword" placeholder="제목 검색..." th:value="${keyword}">
+            <!-- 검색 타입 선택 드롭다운 -->
+            <select name="searchType" class="search-type-select">
+                <option value="title"        th:selected="${searchType == null or searchType == 'title'}">제목</option>
+                <option value="user"         th:selected="${searchType == 'user'}">작성자</option>
+                <option value="titleContent" th:selected="${searchType == 'titleContent'}">제목+본문</option>
+            </select>
+            <input type="text" name="keyword" placeholder="검색어 입력..." th:value="${keyword}">
             <button type="submit" class="btn-search">검색</button>
         </form>
     </div>
@@ -173,7 +187,9 @@
             <h3>
                 전체 <span th:text="${postPage.totalElements}">0</span>건
                 <th:block th:if="${keyword != null and !#strings.isEmpty(keyword)}">
-                    — "<strong th:text="${keyword}"></strong>" 검색 결과
+                    — "<strong th:text="${keyword}"></strong>"
+                    <span th:text="${searchType == 'user'} ? '작성자' : (${searchType == 'titleContent'} ? '제목+본문' : '제목')"></span>
+                    검색 결과
                 </th:block>
             </h3>
             <!-- 비로그인 시 로그인 페이지로 이동 -->
@@ -227,16 +243,16 @@
 
     <!-- 페이징 -->
     <div class="pagination" th:if="${postPage.totalPages > 1}">
-        <a th:href="@{/board(page=0, categoryId=${categoryId}, keyword=${keyword})}"
+        <a th:href="@{/board(page=0, categoryId=${categoryId}, keyword=${keyword}, searchType=${searchType})}"
            th:class="${postPage.first} ? 'page-btn disabled' : 'page-btn'">«</a>
 
         <a th:each="i : ${#numbers.sequence(0, postPage.totalPages - 1)}"
            th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
-           th:href="@{/board(page=${i}, categoryId=${categoryId}, keyword=${keyword})}"
+           th:href="@{/board(page=${i}, categoryId=${categoryId}, keyword=${keyword}, searchType=${searchType})}"
            th:text="${i + 1}"
            th:class="${i == currentPage} ? 'page-btn active' : 'page-btn'"></a>
 
-        <a th:href="@{/board(page=${postPage.totalPages - 1}, categoryId=${categoryId}, keyword=${keyword})}"
+        <a th:href="@{/board(page=${postPage.totalPages - 1}, categoryId=${categoryId}, keyword=${keyword}, searchType=${searchType})}"
            th:class="${postPage.last} ? 'page-btn disabled' : 'page-btn'">»</a>
     </div>
 
