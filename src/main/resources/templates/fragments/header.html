@@ -2,6 +2,8 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:fragment="headerStyles">
+        <!-- 모바일 반응형: 기기 너비에 맞게 뷰포트 설정 -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!--
             theme.js 를 가장 먼저 로드해 화면 깜빡임(FOUC) 방지
             → HTML 파싱 직후 <html data-theme> 를 복원하므로 CSS 적용 전에 테마가 결정됨
