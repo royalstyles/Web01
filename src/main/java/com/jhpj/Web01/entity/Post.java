@@ -6,6 +6,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 게시글 엔티티 — POSTS 테이블 매핑
@@ -83,6 +85,29 @@ public class Post {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 본문 HTML 에서 첫 번째 &lt;img&gt; 의 src 를 추출해 반환 (없으면 null)
+     * 게시판 목록 썸네일 표시에 사용
+     */
+    @Transient
+    public String getThumbnailUrl() {
+        if (content == null || content.isEmpty()) return null;
+        Matcher m = Pattern.compile(
+                "<img[^>]+src=[\"']([^\"']+)[\"']",
+                Pattern.CASE_INSENSITIVE
+        ).matcher(content);
+        return m.find() ? m.group(1) : null;
+    }
+
+    /**
+     * 본문 HTML 에 &lt;video&gt; 태그가 포함되어 있으면 true 반환
+     * 썸네일 이미지가 없을 때 동영상 아이콘을 표시하기 위해 사용
+     */
+    @Transient
+    public boolean isVideoPresent() {
+        return content != null && content.contains("<video");
     }
 
     /** 게시글 상세 조회 시 호출 — 조회수 1 증가 */

@@ -397,6 +397,44 @@
     color: var(--accent) !important;
 }
 
+/* ── 게시판 목록 썸네일 ── */
+[data-theme="dark"] .post-thumb {
+    border-color: var(--border) !important;
+}
+[data-theme="dark"] .post-thumb-video {
+    background: var(--surface-2) !important;
+}
+
+/* ── 관리자 카테고리 추가 바 ── */
+[data-theme="dark"] .add-category-bar {
+    background: var(--surface-2) !important;
+    border-top-color: var(--border-light) !important;
+}
+[data-theme="dark"] .add-category-bar label { color: var(--text-label) !important; }
+[data-theme="dark"] .add-category-bar select {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-body) !important;
+}
+
+/* ── 관리자 수정 모달 ── */
+[data-theme="dark"] .modal-box {
+    background: var(--surface) !important;
+    box-shadow: 0 8px 40px var(--shadow-md) !important;
+}
+[data-theme="dark"] .modal-title { color: var(--text) !important; }
+[data-theme="dark"] .modal-field label { color: var(--text-label) !important; }
+[data-theme="dark"] .modal-field select {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-body) !important;
+}
+[data-theme="dark"] .btn-modal-cancel {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+    color: var(--text-body) !important;
+}
+
 /* ── 글쓰기 페이지 전용 ── */
 [data-theme="dark"] .btn-video {
     background: var(--surface-2) !important;

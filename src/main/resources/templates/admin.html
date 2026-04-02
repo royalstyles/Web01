@@ -143,13 +143,15 @@
             display: block; margin-bottom: 5px; font-weight: 500;
         }
         .add-category-bar input[type="text"],
-        .add-category-bar input[type="number"] {
+        .add-category-bar input[type="number"],
+        .add-category-bar select {
             padding: 8px 12px;
             border: 1px solid #e2e8f0; border-radius: 8px;
             font-size: 14px; font-family: inherit;
-            transition: border .2s;
+            transition: border .2s; background: white;
         }
-        .add-category-bar input:focus {
+        .add-category-bar input:focus,
+        .add-category-bar select:focus {
             outline: none; border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79,70,229,.1);
         }
@@ -433,7 +435,8 @@
                 </div>
                 <div>
                     <label>정렬 순서</label>
-                    <input type="number" name="sortOrder" value="0" min="0" style="width:90px;">
+                    <!-- 사용 중인 번호는 JS에서 제외하여 옵션 생성 -->
+                    <select id="add-sort-select" name="sortOrder" style="width:90px;"></select>
                 </div>
                 <button type="submit" class="btn-add">➕ 추가</button>
             </form>
@@ -454,7 +457,8 @@
             </div>
             <div class="modal-field">
                 <label>정렬 순서</label>
-                <input type="number" id="edit-sort" name="sortOrder" min="0">
+                <!-- 수정 모달: 자신의 현재 번호는 허용, 타 카테고리 번호는 제외 -->
+                <select id="edit-sort" name="sortOrder" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; font-family:inherit;"></select>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-modal-cancel" onclick="closeEditModal()">취소</button>
@@ -464,31 +468,83 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+    /* 현재 사용 중인 정렬 순서 목록 (Thymeleaf에서 주입) */
+    const usedSortOrders = /*[[${categories.![sortOrder]}]]*/ [];
+
+    /**
+     * 선택 가능한 정렬 순서 목록 반환
+     * @param {number|null} excludeOwn - 수정 시 자신의 현재 값은 사용 가능으로 허용 (추가 시 null)
+     * @returns {number[]} 사용 가능한 정렬 순서 배열
+     */
+    function getAvailableSortOrders(excludeOwn) {
+        // 후보 범위: 항상 미사용 번호가 5개 이상 나오도록 상한 계산
+        const maxUsed = usedSortOrders.length > 0 ? Math.max(...usedSortOrders) : 0;
+        const maxCandidate = Math.max(maxUsed + 1, usedSortOrders.length + 4);
+        const available = [];
+        for (let i = 0; i <= maxCandidate; i++) {
+            // 자신의 현재 값이면 허용, 타 카테고리가 이미 사용 중이면 제외
+            if (i === excludeOwn || !usedSortOrders.includes(i)) {
+                available.push(i);
+            }
+        }
+        return available;
+    }
+
+    /**
+     * <select> 요소에 옵션 목록을 채우고 지정 값 선택
+     * @param {HTMLSelectElement} selectEl
+     * @param {number[]} options - 표시할 값 배열
+     * @param {number} selectedVal - 선택 상태로 표시할 값
+     */
+    function fillSelect(selectEl, options, selectedVal) {
+        selectEl.innerHTML = '';
+        options.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val;
+            if (val === selectedVal) opt.selected = true;
+            selectEl.appendChild(opt);
+        });
+    }
+
+    /* 페이지 로드 시 추가 폼의 정렬 순서 select 초기화 */
+    document.addEventListener('DOMContentLoaded', function () {
+        const addSelect = document.getElementById('add-sort-select');
+        const available = getAvailableSortOrders(null);
+        // 기본 선택: 사용 가능한 값 중 가장 작은 값
+        fillSelect(addSelect, available, available[0]);
+    });
+
     function openEditModal(btn) {
-        const id       = btn.dataset.catId;
-        const name     = btn.dataset.catName;
-        const sortOrder = btn.dataset.catSort;
+        const id        = btn.dataset.catId;
+        const name      = btn.dataset.catName;
+        const sortOrder = parseInt(btn.dataset.catSort, 10);
+
         document.getElementById('edit-name').value  = name;
-        document.getElementById('edit-sort').value  = sortOrder;
         document.getElementById('edit-form').action = '/admin/categories/' + id + '/update';
+
+        /* 수정 모달의 정렬 순서: 자신의 현재 값은 선택 가능하도록 포함 */
+        const editSelect  = document.getElementById('edit-sort');
+        const available   = getAvailableSortOrders(sortOrder);
+        fillSelect(editSelect, available, sortOrder);
+
         document.getElementById('edit-modal').classList.add('open');
         document.getElementById('edit-name').focus();
     }
-
 
     function closeEditModal() {
         document.getElementById('edit-modal').classList.remove('open');
     }
 
-    // 모달 바깥(오버레이) 클릭 시 닫기
+    /* 모달 바깥(오버레이) 클릭 시 닫기 */
     function handleModalOverlayClick(e) {
         if (e.target === document.getElementById('edit-modal')) {
             closeEditModal();
         }
     }
 
-    // ESC 키로 모달 닫기
+    /* ESC 키로 모달 닫기 */
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeEditModal();
     });

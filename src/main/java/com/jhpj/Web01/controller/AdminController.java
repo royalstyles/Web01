@@ -61,6 +61,14 @@ public class AdminController {
         model.addAttribute("currentUsername", currentUser.getUsername());
         model.addAttribute("categories", categoryRepository.findAllByOrderBySortOrderAsc());
 
+        // ── 헤더 프래그먼트용 공통 속성 ──
+        model.addAttribute("isLoggedIn", true);
+        model.addAttribute("username", currentUser.getUsername());
+        model.addAttribute("isAdmin", currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+        userRepository.findByUsername(currentUser.getUsername())
+                .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));
+
         return "admin";
     }
 
