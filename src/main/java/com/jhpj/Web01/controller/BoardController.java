@@ -17,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 게시판 컨트롤러 — /board/** 경로 처리
@@ -56,6 +57,12 @@ public class BoardController {
                         .map(Category::getName)
                         .orElse("게시판");
 
+        // 로그인 사용자: 현재 페이지 게시글의 읽음 여부를 서버에서 조회 (기기 간 동기화)
+        List<Long> postIds = postPage.getContent().stream().map(Post::getId).toList();
+        Set<Long> readPostIds = (userDetails != null)
+                ? boardService.getReadPostIds(userDetails.getUsername(), postIds)
+                : Set.of();
+
         model.addAttribute("posts",            postPage.getContent());
         model.addAttribute("postPage",         postPage);
         model.addAttribute("categories",       categories);
@@ -64,6 +71,7 @@ public class BoardController {
         model.addAttribute("searchType",       searchType);
         model.addAttribute("currentPage",      page);
         model.addAttribute("currentBoardName", boardName);
+        model.addAttribute("readPostIds",      readPostIds);
 
         return "board/board-list";
     }
@@ -108,6 +116,11 @@ public class BoardController {
 
         Post post = boardService.getPost(postId);
         List<Comment> comments = boardService.getComments(postId);
+
+        // 로그인 사용자의 읽음 이력 기록 (기기 간 동기화용)
+        if (userDetails != null) {
+            boardService.markAsRead(postId, userDetails.getUsername());
+        }
 
         model.addAttribute("post",     post);
         model.addAttribute("comments", comments);

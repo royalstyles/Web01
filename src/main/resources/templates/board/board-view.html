@@ -399,5 +399,25 @@
         el.textContent = parseInt(el.textContent) + delta;
     }
 </script>
+
+<script th:inline="javascript">
+    /**
+     * 읽음 처리
+     * - 로그인 사용자: BoardController.view() 에서 서버 DB에 이미 기록됨 (기기 간 동기화)
+     * - 비로그인 사용자: localStorage 에 post ID 저장 (최대 1000개 유지)
+     */
+    (function () {
+        const isLoggedIn = /*[[${isLoggedIn}]]*/ false;
+        if (isLoggedIn) return; // 로그인 시 서버에서 처리하므로 localStorage 불필요
+
+        const postId   = /*[[${post.id}]]*/ 0;
+        const readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
+        if (!readPosts.includes(postId)) {
+            readPosts.push(postId);
+            if (readPosts.length > 1000) readPosts.splice(0, readPosts.length - 1000);
+            localStorage.setItem('readPosts', JSON.stringify(readPosts));
+        }
+    })();
+</script>
 </body>
 </html>

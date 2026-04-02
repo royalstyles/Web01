@@ -2,6 +2,8 @@ package com.jhpj.Web01.service;
 
 import com.jhpj.Web01.entity.*;
 import com.jhpj.Web01.repository.*;
+
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class BoardService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
+    private final PostReadRepository postReadRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
@@ -155,6 +158,34 @@ public class BoardService {
         post.getFiles().forEach(f -> fileService.delete(f.getStoredName()));
 
         postRepository.delete(post);
+    }
+
+    // ── 읽음 처리 ────────────────────────────────────────────
+
+    /**
+     * 게시글 읽음 기록 저장 — 이미 읽은 경우 무시 (UNIQUE 제약 기반)
+     * 게시글 상세 조회 시 로그인 사용자에 한해 호출
+     */
+    @Transactional
+    public void markAsRead(Long postId, String username) {
+        User user = findUser(username);
+        if (!postReadRepository.existsByPostIdAndUserId(postId, user.getId())) {
+            postReadRepository.save(PostRead.builder()
+                    .post(postRepository.getReferenceById(postId))
+                    .user(user)
+                    .build());
+        }
+    }
+
+    /**
+     * 현재 목록 페이지의 게시글 중 사용자가 읽은 ID 목록 반환
+     * 목록이 비어있으면 DB 조회 생략
+     */
+    @Transactional(readOnly = true)
+    public Set<Long> getReadPostIds(String username, List<Long> postIds) {
+        if (postIds.isEmpty()) return Set.of();
+        User user = findUser(username);
+        return postReadRepository.findReadPostIds(user.getId(), postIds);
     }
 
     // ── 내가 쓴 글 목록 ──────────────────────────────────────
