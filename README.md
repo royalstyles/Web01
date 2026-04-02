@@ -1,7 +1,7 @@
 # Web01 — Spring Boot 웹 애플리케이션
 
 Spring Boot 3 기반의 커뮤니티 웹 애플리케이션입니다.  
-Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 댓글, 좋아요), **라이트/다크 테마**, GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
+Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 썸네일, 타입별 검색, 댓글, 좋아요), **라이트/다크 테마**, GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
 
 ---
 
@@ -71,7 +71,7 @@ src/main/java/com/jhpj/Web01/
 │   └── EmailChangeToken.java              # 이메일 변경 인증 토큰
 ├── repository/
 │   ├── UserRepository.java
-│   ├── PostRepository.java                # fetch join 쿼리 포함
+│   ├── PostRepository.java                # fetch join 쿼리 + 제목/작성자/본문 검색 쿼리 포함
 │   ├── CommentRepository.java
 │   ├── CategoryRepository.java
 │   ├── PostLikeRepository.java
@@ -159,7 +159,8 @@ src/main/resources/
 - 헤더 우측 🌙/☀️ 버튼으로 즉시 전환, `localStorage`에 설정 영구 저장
 
 ### 게시판
-- **목록/검색**: 카테고리 필터 + 제목 키워드 검색, 10건 페이징
+- **목록/검색**: 카테고리 필터 + **검색 타입(제목 / 작성자 / 제목+본문)** 선택 키워드 검색, 10건 페이징
+- **썸네일**: 본문 첫 번째 이미지 자동 추출 표시, 동영상만 있는 경우 🎬 아이콘 표시
 - **Quill.js 리치 텍스트 에디터**: 폰트, 색상, 정렬, 코드블록, 이미지, 동영상 지원
 - **이미지 업로드**: 툴바 클릭 → 서버 저장 → URL 삽입 (최대 20MB)
 - **동영상 업로드**: 별도 버튼 → 서버 저장 → `<video controls>` 태그로 에디터 삽입 (최대 500MB)
