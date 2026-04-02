@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * 관리자 기능 서비스
  * 회원 권한 변경, 회원 삭제, 계정 잠금 해제, 이메일 인증 강제 완료를 처리
@@ -89,6 +91,12 @@ public class AdminService {
         category.setName(name.trim());
         category.setSortOrder(sortOrder);
         categoryRepository.save(category);
+    }
+
+    /** 정렬순서 기준 전체 카테고리 조회 — AdminController 대시보드 렌더링용 */
+    @Transactional(readOnly = true)
+    public List<Category> findAllCategories() {
+        return categoryRepository.findAllByOrderBySortOrderAsc();
     }
 
     // ── 카테고리 삭제 ──────────────────────────────────────────

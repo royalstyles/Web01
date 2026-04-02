@@ -87,6 +87,11 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /** 썸네일 추출용 정규식 — 매 호출마다 컴파일을 피하기 위해 static 상수로 선언 */
+    private static final Pattern IMG_SRC_PATTERN = Pattern.compile(
+            "<img[^>]+src=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE
+    );
+
     /**
      * 본문 HTML 에서 첫 번째 &lt;img&gt; 의 src 를 추출해 반환 (없으면 null)
      * 게시판 목록 썸네일 표시에 사용
@@ -94,10 +99,7 @@ public class Post {
     @Transient
     public String getThumbnailUrl() {
         if (content == null || content.isEmpty()) return null;
-        Matcher m = Pattern.compile(
-                "<img[^>]+src=[\"']([^\"']+)[\"']",
-                Pattern.CASE_INSENSITIVE
-        ).matcher(content);
+        Matcher m = IMG_SRC_PATTERN.matcher(content);
         return m.find() ? m.group(1) : null;
     }
 

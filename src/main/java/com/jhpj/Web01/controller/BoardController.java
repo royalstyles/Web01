@@ -1,5 +1,6 @@
 package com.jhpj.Web01.controller;
 
+import com.jhpj.Web01.entity.Category;
 import com.jhpj.Web01.entity.Comment;
 import com.jhpj.Web01.entity.Post;
 import com.jhpj.Web01.repository.UserRepository;
@@ -46,23 +47,22 @@ public class BoardController {
 
         Page<Post> postPage = boardService.getPostList(categoryId, keyword, searchType, page);
 
-        model.addAttribute("posts",       postPage.getContent());
-        model.addAttribute("postPage",    postPage);
-        model.addAttribute("categories",  boardService.findAllCategories());
-        model.addAttribute("categoryId",  categoryId);
-        model.addAttribute("keyword",     keyword);
-        model.addAttribute("searchType",  searchType);
-        model.addAttribute("currentPage", page);
+        // findAllCategories() 를 한 번만 호출해 목록 조회와 카테고리명 추출에 재사용
+        List<Category> categories = boardService.findAllCategories();
+        String boardName = (categoryId == null) ? "게시판"
+                : categories.stream()
+                        .filter(c -> c.getId().equals(categoryId))
+                        .findFirst()
+                        .map(Category::getName)
+                        .orElse("게시판");
 
-        // ── 현재 카테고리명 (헤더 표시용) ── 추가
-        String boardName = "게시판";
-        if (categoryId != null) {
-            boardName = boardService.findAllCategories().stream()
-                    .filter(c -> c.getId().equals(categoryId))
-                    .findFirst()
-                    .map(c -> c.getName())
-                    .orElse("게시판");
-        }
+        model.addAttribute("posts",            postPage.getContent());
+        model.addAttribute("postPage",         postPage);
+        model.addAttribute("categories",       categories);
+        model.addAttribute("categoryId",       categoryId);
+        model.addAttribute("keyword",          keyword);
+        model.addAttribute("searchType",       searchType);
+        model.addAttribute("currentPage",      page);
         model.addAttribute("currentBoardName", boardName);
 
         return "board/board-list";

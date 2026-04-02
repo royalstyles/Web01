@@ -1,6 +1,7 @@
 package com.jhpj.Web01.controller;
 
 import com.jhpj.Web01.service.ProfileService;
+import com.jhpj.Web01.util.WebUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -105,10 +106,8 @@ public class ProfileController {
                               HttpServletRequest request,
                               RedirectAttributes ra) {
         try {
-            String baseUrl = request.getScheme() + "://" + request.getServerName()
-                    + (request.getServerPort() == 80 || request.getServerPort() == 443
-                    ? "" : ":" + request.getServerPort());
-            profileService.requestEmailChange(userDetails.getUsername(), newEmail, baseUrl);
+            profileService.requestEmailChange(userDetails.getUsername(), newEmail,
+                    WebUtils.extractBaseUrl(request));
             ra.addFlashAttribute("successMsg",
                     "'" + newEmail + "' 으로 인증 메일을 발송했습니다. 인증 완료 후 이메일이 변경됩니다.");
         } catch (IllegalArgumentException e) {

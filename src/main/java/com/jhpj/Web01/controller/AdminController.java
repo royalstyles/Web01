@@ -1,7 +1,6 @@
 package com.jhpj.Web01.controller;
 
 import com.jhpj.Web01.entity.User;
-import com.jhpj.Web01.repository.CategoryRepository;
 import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.AdminService;
 import com.jhpj.Web01.service.LoginAttemptService;
@@ -31,7 +30,6 @@ public class AdminController {
     private final UserRepository userRepository;
     private final AdminService adminService;
     private final LoginAttemptService loginAttemptService;
-    private final CategoryRepository categoryRepository;
 
     /** 대시보드 */
     @GetMapping
@@ -59,7 +57,7 @@ public class AdminController {
         model.addAttribute("lockedCount",     lockedCount);
         model.addAttribute("lockedIds",       lockedIds);
         model.addAttribute("currentUsername", currentUser.getUsername());
-        model.addAttribute("categories", categoryRepository.findAllByOrderBySortOrderAsc());
+        model.addAttribute("categories", adminService.findAllCategories());
 
         // ── 헤더 프래그먼트용 공통 속성 ──
         model.addAttribute("isLoggedIn", true);

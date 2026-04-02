@@ -42,6 +42,25 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
     }
 
+    /**
+     * 이메일 인증 토큰 검증 및 계정 활성화
+     * 토큰이 유효하지 않거나 만료된 경우 IllegalArgumentException 발생
+     */
+    @Transactional
+    public void verifyEmail(String token) {
+        EmailVerificationToken evt = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 인증 링크입니다."));
+
+        if (evt.isExpired()) {
+            throw new IllegalArgumentException("인증 링크가 만료되었습니다. 다시 회원가입해주세요.");
+        }
+
+        User user = evt.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        tokenRepository.delete(evt);
+    }
+
     /** 회원가입 — 비밀번호 정책 검증 포함 */
     @Transactional
     public User register(String username, String password, String confirmPassword, String email, String baseUrl) {

@@ -1,19 +1,13 @@
 package com.jhpj.Web01.controller;
 
-import com.jhpj.Web01.entity.EmailVerificationToken;
-import com.jhpj.Web01.entity.User;
-import com.jhpj.Web01.repository.EmailVerificationTokenRepository;
-import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.CustomUserDetailsService;
+import com.jhpj.Web01.util.WebUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.Optional;
 
 /**
  * 인증 관련 컨트롤러 — 로그인/회원가입/이메일 인증 처리
@@ -26,8 +20,6 @@ import java.util.Optional;
 public class AuthController {
 
     private final CustomUserDetailsService userDetailsService;
-    private final EmailVerificationTokenRepository tokenRepository;  // 이메일 인증 토큰 조회/삭제용
-    private final UserRepository userRepository;                     // 인증 완료 후 사용자 상태 업데이트용
 
     /** 로그인 페이지 */
     @GetMapping("/login")
@@ -45,7 +37,7 @@ public class AuthController {
         return "auth/signup";
     }
 
-    /** 회원가입 처리 — baseUrl 추가 */
+    /** 회원가입 처리 */
     @PostMapping("/signup")
     public String signup(@RequestParam String username,
                          @RequestParam String password,
@@ -54,10 +46,8 @@ public class AuthController {
                          HttpServletRequest request,
                          RedirectAttributes redirectAttributes) {
         try {
-            String baseUrl = request.getScheme() + "://" + request.getServerName()
-                    + (request.getServerPort() == 80 || request.getServerPort() == 443
-                    ? "" : ":" + request.getServerPort());
-            userDetailsService.register(username, password, confirmPassword, email, baseUrl);
+            userDetailsService.register(username, password, confirmPassword, email,
+                    WebUtils.extractBaseUrl(request));
             redirectAttributes.addFlashAttribute("successMsg",
                     "인증 메일을 발송했습니다. 메일함을 확인해주세요.");
             return "redirect:/auth/login";
@@ -67,33 +57,17 @@ public class AuthController {
         }
     }
 
-    /** 이메일 인증 처리 */
+    /** 이메일 인증 처리 — 실제 처리는 CustomUserDetailsService.verifyEmail() 위임 */
     @GetMapping("/verify")
-    @Transactional
     public String verifyEmail(@RequestParam String token, Model model) {
-        Optional<EmailVerificationToken> opt = tokenRepository.findByToken(token);
-
-        if (opt.isEmpty()) {
-            model.addAttribute("msg", "유효하지 않은 인증 링크입니다.");
+        try {
+            userDetailsService.verifyEmail(token);
+            model.addAttribute("msg", "이메일 인증이 완료되었습니다! 로그인하세요.");
+            model.addAttribute("success", true);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("msg", e.getMessage());
             model.addAttribute("success", false);
-            return "auth/verify-result";
         }
-
-        EmailVerificationToken evt = opt.get();
-        if (evt.isExpired()) {
-            model.addAttribute("msg", "인증 링크가 만료되었습니다. 다시 회원가입해주세요.");
-            model.addAttribute("success", false);
-            return "auth/verify-result";
-        }
-
-        // 인증 완료 처리
-        User user = evt.getUser();
-        user.setEmailVerified(true);
-        userRepository.save(user);
-        tokenRepository.delete(evt);
-
-        model.addAttribute("msg", "이메일 인증이 완료되었습니다! 로그인하세요.");
-        model.addAttribute("success", true);
         return "auth/verify-result";
     }
 }

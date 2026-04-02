@@ -141,14 +141,8 @@ public class FileService {
      * 프로필 이미지 삭제 — 디스크 + DB
      */
     public void deleteProfileImage(String storedName) {
-        postFileRepository.findByStoredName(storedName).ifPresent(pf -> {
-            try {
-                Files.deleteIfExists(Paths.get(pf.getFilePath()));
-            } catch (IOException e) {
-                log.warn("프로필 이미지 디스크 삭제 실패: {}", pf.getFilePath(), e);
-            }
-            postFileRepository.delete(pf);
-        });
+        postFileRepository.findByStoredName(storedName)
+                .ifPresent(this::deleteFromDiskAndDb);
     }
 
     /**
@@ -156,14 +150,18 @@ public class FileService {
      */
     @Transactional
     public void delete(String storedName) {
-        postFileRepository.findByStoredName(storedName).ifPresent(pf -> {
-            try {
-                Files.deleteIfExists(Paths.get(pf.getFilePath()));
-            } catch (IOException e) {
-                log.warn("파일 삭제 실패: {}", pf.getFilePath(), e);
-            }
-            postFileRepository.delete(pf);
-        });
+        postFileRepository.findByStoredName(storedName)
+                .ifPresent(this::deleteFromDiskAndDb);
+    }
+
+    /** 디스크 파일 삭제 후 DB 레코드 제거 — delete/deleteProfileImage 공통 처리 */
+    private void deleteFromDiskAndDb(PostFile pf) {
+        try {
+            Files.deleteIfExists(Paths.get(pf.getFilePath()));
+        } catch (IOException e) {
+            log.warn("파일 디스크 삭제 실패: {}", pf.getFilePath(), e);
+        }
+        postFileRepository.delete(pf);
     }
 
     /**
