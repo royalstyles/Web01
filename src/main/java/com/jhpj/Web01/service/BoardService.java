@@ -163,18 +163,13 @@ public class BoardService {
     // ── 읽음 처리 ────────────────────────────────────────────
 
     /**
-     * 게시글 읽음 기록 저장 — 이미 읽은 경우 무시 (UNIQUE 제약 기반)
-     * 게시글 상세 조회 시 로그인 사용자에 한해 호출
+     * 게시글 읽음 기록 저장 — Oracle MERGE INTO(upsert)로 중복 없이 처리
+     * 이미 읽은 경우 WHEN NOT MATCHED 조건 불충족으로 INSERT 생략 → 예외 없음
      */
     @Transactional
     public void markAsRead(Long postId, String username) {
         User user = findUser(username);
-        if (!postReadRepository.existsByPostIdAndUserId(postId, user.getId())) {
-            postReadRepository.save(PostRead.builder()
-                    .post(postRepository.getReferenceById(postId))
-                    .user(user)
-                    .build());
-        }
+        postReadRepository.mergeRead(postId, user.getId());
     }
 
     /**

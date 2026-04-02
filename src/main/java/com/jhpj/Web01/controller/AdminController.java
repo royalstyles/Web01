@@ -4,6 +4,7 @@ import com.jhpj.Web01.entity.User;
 import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.AdminService;
 import com.jhpj.Web01.service.LoginAttemptService;
+import com.jhpj.Web01.service.QuasarZoneImportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,6 +31,7 @@ public class AdminController {
     private final UserRepository userRepository;
     private final AdminService adminService;
     private final LoginAttemptService loginAttemptService;
+    private final QuasarZoneImportService importService;
 
     /** 대시보드 */
     @GetMapping
@@ -57,7 +59,9 @@ public class AdminController {
         model.addAttribute("lockedCount",     lockedCount);
         model.addAttribute("lockedIds",       lockedIds);
         model.addAttribute("currentUsername", currentUser.getUsername());
-        model.addAttribute("categories", adminService.findAllCategories());
+        model.addAttribute("categories",       adminService.findAllCategories());
+        model.addAttribute("importLastResult", importService.getLastRunResult());
+        model.addAttribute("importLastRunAt",  importService.getLastRunAt());
 
         // ── 헤더 프래그먼트용 공통 속성 ──
         model.addAttribute("isLoggedIn", true);
@@ -121,6 +125,18 @@ public class AdminController {
                         ra.addFlashAttribute("errorMsg", msg);
                     }
                 });
+    }
+
+    // ── 퀘이사존 수집 트리거 ──────────────────────────────────────
+
+    /** 관리자 화면에서 수동으로 퀘이사존 수집 실행 */
+    @PostMapping("/import/quasarzone")
+    public String triggerQuasarZoneImport(
+            @RequestParam(defaultValue = "1") int pages,
+            RedirectAttributes ra) {
+        String result = importService.runImport(Math.min(pages, 5)); // 최대 5페이지 제한
+        ra.addFlashAttribute("successMsg", "[퀘이사존 수집] " + result);
+        return "redirect:/admin";
     }
 
     // ── 카테고리 추가 ──────────────────────────────────────────

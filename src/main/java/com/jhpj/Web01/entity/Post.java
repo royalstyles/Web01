@@ -66,6 +66,13 @@ public class Post {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    /**
+     * 외부 수집 게시글의 원문 URL — null 이면 직접 작성 게시글
+     * 퀘이사존 등 외부 사이트에서 자동 수집 시 중복 방지 키로 사용
+     */
+    @Column(length = 1000)
+    private String sourceUrl;
+
     /** 댓글 목록 — 게시글 삭제 시 함께 삭제(CASCADE + orphanRemoval) */
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

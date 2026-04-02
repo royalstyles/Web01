@@ -78,6 +78,9 @@ dependencies {
 	// Oracle 지원을 위해 추가 필요
 	implementation 'org.flywaydb:flyway-database-oracle'
 
+	// 웹 스크래핑 (외부 게시글 자동 수집)
+	implementation 'org.jsoup:jsoup:1.18.3'
+
 
 }
 

@@ -443,6 +443,58 @@
         </div>
     </div>
 
+    <!-- ════════════════════════════════════════
+         외부 게시글 자동 수집
+    ════════════════════════════════════════ -->
+    <div class="section-title">🤖 외부 게시글 자동 수집</div>
+    <div class="table-card">
+        <div class="table-header">
+            <h3>퀘이사존 특가/예판</h3>
+            <span style="font-size:12px; color:#9ca3af;">quasarzone.com/bbs/qe_sale</span>
+        </div>
+
+        <!-- 마지막 수집 상태 -->
+        <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
+                    display:flex; gap:24px; flex-wrap:wrap; font-size:14px;">
+            <div>
+                <span style="color:#6b7280;">마지막 실행:</span>
+                <strong th:text="${importLastRunAt}"></strong>
+            </div>
+            <div>
+                <span style="color:#6b7280;">결과:</span>
+                <strong th:text="${importLastResult}"></strong>
+            </div>
+            <div style="margin-left:auto; font-size:12px; color:#9ca3af; align-self:center;">
+                자동 수집 주기: application.properties → import.quasarzone.enabled=true 설정 시 활성화
+            </div>
+        </div>
+
+        <!-- 수동 수집 트리거 폼 -->
+        <div style="padding: 20px;">
+            <form th:action="@{/admin/import/quasarzone}" method="post"
+                  style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;"
+                  onsubmit="return confirm('퀘이사존 수집을 시작합니다. 페이지당 약 수 초~수십 초 소요됩니다.')">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <label style="display:block; font-size:12px; color:#6b7280; margin-bottom:4px;">
+                        수집 페이지 수 (최대 5)
+                    </label>
+                    <input type="number" name="pages" value="1" min="1" max="5"
+                           style="width:80px; padding:7px 10px; border:1px solid #e2e8f0;
+                                  border-radius:8px; font-size:14px;">
+                </div>
+                <button type="submit"
+                        style="padding:8px 20px; background:#4f46e5; color:white;
+                               border:none; border-radius:8px; font-size:14px; cursor:pointer;">
+                    ▶ 지금 수집
+                </button>
+                <p style="font-size:12px; color:#9ca3af; align-self:center; margin:0;">
+                    수집 글 카테고리: <code>import.category.name</code> 설정값 기준 (없으면 미분류)
+                </p>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <!-- ── 카테고리 수정 모달 ── -->

@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(grep -E \"#[0-9a-fA-F]{3,6}|rgb\")",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "WebFetch(domain:quasarzone.com)",
+      "Bash(curl -s -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" \"https://quasarzone.com/bbs/qe_sale\")",
+      "Bash(sed -n '5083,5200p' /tmp/qz.html)",
+      "Bash(curl -s -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" \"https://quasarzone.com/bbs/qe_sale/views/662867\")"
     ]
   }
 }

@@ -58,6 +58,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.category WHERE p.author.username = :username ORDER BY p.createdAt DESC")
     Page<Post> findByAuthorUsernameWithDetails(@Param("username") String username, Pageable pageable);
 
+    /** 외부 수집 중복 방지 — source_url 이 이미 존재하면 true */
+    boolean existsBySourceUrl(String sourceUrl);
+
     /** 게시글 상세 조회 — 작성자/카테고리 FETCH JOIN 으로 Lazy 로딩 없이 한 번에 조회 */
     @Query("SELECT p FROM Post p " +
             "LEFT JOIN FETCH p.author " +
