@@ -318,14 +318,76 @@
     border-color: var(--border) !important;
 }
 
-/* ── 프로필 섹션 카드 ── */
+/* ── 프로필 페이지 ── */
+
+/* 프로필 헤더 카드 */
+[data-theme="dark"] .profile-header {
+    background: var(--surface) !important;
+    box-shadow: 0 2px 12px var(--shadow-sm) !important;
+}
+[data-theme="dark"] .profile-email { color: var(--text-muted) !important; }
+
+/* 프로필 배지 */
+[data-theme="dark"] .badge-admin {
+    background: #451a03 !important;
+    color: #fbbf24 !important;
+}
+[data-theme="dark"] .badge-user {
+    background: #172554 !important;
+    color: #60a5fa !important;
+}
+[data-theme="dark"] .badge-unverified {
+    background: var(--del-bg) !important;
+    color: var(--del-color) !important;
+}
+
+/* 이미지 삭제 버튼 */
+[data-theme="dark"] .btn-img-delete {
+    border-color: #7f1d1d !important;
+    color: var(--del-color) !important;
+}
+[data-theme="dark"] .btn-img-delete:hover { background: var(--del-bg) !important; }
+
+/* 섹션 카드 */
 [data-theme="dark"] .section-card {
     background: var(--surface) !important;
-    border-color: var(--border-light) !important;
+    box-shadow: 0 2px 12px var(--shadow-sm) !important;
 }
+[data-theme="dark"] .section-header {
+    border-bottom-color: var(--border-light) !important;
+}
+[data-theme="dark"] .section-subtitle { color: var(--text-muted) !important; }
+
+/* 섹션 아이콘 배경 */
+[data-theme="dark"] .icon-indigo { background: #312e81 !important; }
+[data-theme="dark"] .icon-blue   { background: #172554 !important; }
+[data-theme="dark"] .icon-amber  { background: #451a03 !important; }
+
+/* 폼 요소 */
 [data-theme="dark"] .form-label,
-[data-theme="dark"] .profile-label { color: var(--text-label) !important; }
+[data-theme="dark"] .profile-label,
+[data-theme="dark"] .section-body label { color: var(--text-label) !important; }
 [data-theme="dark"] .current-val   { color: var(--text-muted) !important; }
+[data-theme="dark"] .input-current {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+    color: var(--text-muted) !important;
+}
+[data-theme="dark"] .input-current strong { color: var(--text-body) !important; }
+
+/* 구분선 */
+[data-theme="dark"] .divider { background: var(--border-light) !important; }
+
+/* 비밀번호 강도 바 */
+[data-theme="dark"] .strength-bar { background: var(--border) !important; }
+[data-theme="dark"] .strength-hint { /* color는 JS에서 직접 지정 — 별도 오버라이드 불필요 */ }
+
+/* 이메일 안내 박스 */
+[data-theme="dark"] .info-box {
+    background: #0c1e2e !important;
+    border-color: #1e4060 !important;
+    color: #7dd3fc !important;
+}
 
 /* ── 관리자 통계 카드 ── */
 [data-theme="dark"] .stat-label { color: var(--text-label) !important; }
