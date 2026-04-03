@@ -4,6 +4,9 @@
     <th:block th:fragment="headerStyles">
         <!-- 모바일 반응형: 기기 너비에 맞게 뷰포트 설정 -->
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- CSRF 토큰 — AJAX POST 요청(알림 읽음 처리 등)에 사용 -->
+        <meta name="_csrf"        th:content="${_csrf.token}"/>
+        <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
         <!--
             theme.js 를 가장 먼저 로드해 화면 깜빡임(FOUC) 방지
             → HTML 파싱 직후 <html data-theme> 를 복원하므로 CSS 적용 전에 테마가 결정됨
@@ -189,6 +192,369 @@
                     font-size: 14px;
                 }
             }
+
+            /* ── 우측 고정 유저 패널 ── */
+            .user-side-panel {
+                position: fixed;
+                top: 50%;           /* 뷰포트 세로 중앙 */
+                transform: translateY(-50%);
+                /* 게시판 콘텐츠(max-width:1000px) 오른쪽 끝 + 10px
+                   position:fixed 기준 50% = 뷰포트 절반
+                   → 콘텐츠 우측 끝(500px) + 여백(10px) = 510px */
+                left: calc(50% + 510px);
+                right: auto;
+                width: 180px;
+                background: white;
+                border-radius: 14px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, .12);
+                padding: 20px 16px 16px;
+                z-index: 90;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                border: 1px solid rgba(79, 70, 229, .1);
+            }
+
+            /* 다크 모드 패널 */
+            [data-theme="dark"] .user-side-panel {
+                background: #1e1b4b;
+                border-color: rgba(255, 255, 255, .1);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, .4);
+            }
+
+            /* 패널 내 아바타 */
+            .usp-avatar {
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: #ede9fe;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                font-weight: 700;
+                color: #4f46e5;
+                overflow: hidden;
+                margin-bottom: 8px;
+                border: 2px solid #c4b5fd;
+                flex-shrink: 0;
+                cursor: pointer;
+                transition: transform .15s, box-shadow .15s;
+            }
+
+            .usp-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+            }
+
+            .usp-avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            /* 유저 아이디 */
+            .usp-username {
+                font-size: 14px;
+                font-weight: 700;
+                color: #1e1b4b;
+                text-align: center;
+                word-break: break-all;
+            }
+
+            [data-theme="dark"] .usp-username {
+                color: #e0e7ff;
+            }
+
+            /* 권한 뱃지 */
+            .usp-role {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 2px 10px;
+                border-radius: 20px;
+                margin-bottom: 10px;
+            }
+
+            .usp-role-admin {
+                background: #fef3c7;
+                color: #d97706;
+            }
+
+            .usp-role-user {
+                background: #ede9fe;
+                color: #6d28d9;
+            }
+
+            /* 패널 내 메뉴 버튼 */
+            .usp-divider {
+                width: 100%;
+                height: 1px;
+                background: #e2e8f0;
+                margin: 6px 0;
+            }
+
+            [data-theme="dark"] .usp-divider {
+                background: rgba(255, 255, 255, .1);
+            }
+
+            .usp-btn {
+                width: 100%;
+                padding: 9px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 500;
+                text-align: center;
+                text-decoration: none;
+                color: #374151;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                cursor: pointer;
+                transition: all .15s;
+                font-family: inherit;
+                display: block;
+            }
+
+            .usp-btn:hover {
+                background: #ede9fe;
+                color: #4f46e5;
+                border-color: #c4b5fd;
+            }
+
+            [data-theme="dark"] .usp-btn {
+                background: rgba(255, 255, 255, .06);
+                color: #c7d2fe;
+                border-color: rgba(255, 255, 255, .1);
+            }
+
+            [data-theme="dark"] .usp-btn:hover {
+                background: rgba(79, 70, 229, .3);
+                color: #e0e7ff;
+                border-color: rgba(79, 70, 229, .5);
+            }
+
+            /* 로그아웃 버튼 */
+            .usp-btn-logout {
+                color: #dc2626;
+                background: #fff5f5;
+                border-color: #fecaca;
+            }
+
+            .usp-btn-logout:hover {
+                background: #fee2e2;
+                color: #b91c1c;
+                border-color: #fca5a5;
+            }
+
+            [data-theme="dark"] .usp-btn-logout {
+                color: #fca5a5;
+                background: rgba(220, 38, 38, .1);
+                border-color: rgba(220, 38, 38, .25);
+            }
+
+            [data-theme="dark"] .usp-btn-logout:hover {
+                background: rgba(220, 38, 38, .2);
+                color: #fecaca;
+            }
+
+            /* 콘텐츠(1000px) + 양쪽 패딩(20px) + 패널(180px) + 여백(10px) × 2
+               = 1000 + 40 + 180 + 20 = 1240px 이하에서 숨김 */
+            @media (max-width: 1240px) {
+                .user-side-panel {
+                    display: none;
+                }
+            }
+
+            /* ── 알림 버튼 래퍼 (드롭다운 기준점) ── */
+            .usp-notif-wrap {
+                position: relative;
+                width: 100%;
+            }
+
+            /* 알림 버튼 — 읽지 않은 알림 있을 때 강조 */
+            .usp-btn-notif {
+                position: relative;
+            }
+
+            /* 읽지 않은 알림 수 뱃지 */
+            .notif-badge {
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                min-width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                background: #ef4444;
+                color: white;
+                font-size: 10px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 4px;
+                line-height: 1;
+            }
+
+            /* 알림 드롭다운 패널 — 유저 패널 왼쪽으로 펼쳐짐 */
+            .notif-dropdown {
+                position: absolute;
+                top: 0;
+                right: calc(100% + 14px); /* 유저 패널 왼쪽으로 14px */
+                width: 300px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, .15);
+                border: 1px solid #e2e8f0;
+                z-index: 200;
+                overflow: hidden;
+                animation: notifSlideIn .15s ease;
+            }
+
+            @keyframes notifSlideIn {
+                from { opacity: 0; transform: translateX(8px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+
+            [data-theme="dark"] .notif-dropdown {
+                background: #1e1b4b;
+                border-color: rgba(255, 255, 255, .12);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+            }
+
+            /* 드롭다운 헤더 */
+            .notif-dropdown-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 14px;
+                border-bottom: 1px solid #e2e8f0;
+                font-size: 13px;
+                font-weight: 700;
+                color: #1e1b4b;
+            }
+
+            [data-theme="dark"] .notif-dropdown-header {
+                border-bottom-color: rgba(255, 255, 255, .1);
+                color: #e0e7ff;
+            }
+
+            .notif-read-all-btn {
+                font-size: 11px;
+                color: #6b7280;
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-family: inherit;
+                transition: background .15s;
+            }
+
+            .notif-read-all-btn:hover {
+                background: #f3f4f6;
+                color: #4f46e5;
+            }
+
+            [data-theme="dark"] .notif-read-all-btn:hover {
+                background: rgba(255, 255, 255, .08);
+                color: #818cf8;
+            }
+
+            /* 알림 목록 스크롤 영역 */
+            .notif-list {
+                max-height: 320px;
+                overflow-y: auto;
+            }
+
+            .notif-list::-webkit-scrollbar { width: 4px; }
+            .notif-list::-webkit-scrollbar-track { background: transparent; }
+            .notif-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+            /* 알림 항목 */
+            .notif-item {
+                display: flex;
+                gap: 10px;
+                padding: 11px 14px;
+                cursor: pointer;
+                transition: background .15s;
+                border-bottom: 1px solid #f1f5f9;
+                text-decoration: none;
+            }
+
+            .notif-item:last-child { border-bottom: none; }
+
+            .notif-item:hover { background: #f8fafc; }
+
+            /* 읽지 않은 알림 — 배경 강조 */
+            .notif-item.unread {
+                background: #f5f3ff;
+            }
+
+            .notif-item.unread:hover { background: #ede9fe; }
+
+            [data-theme="dark"] .notif-item { border-bottom-color: rgba(255, 255, 255, .06); }
+            [data-theme="dark"] .notif-item:hover { background: rgba(255, 255, 255, .05); }
+            [data-theme="dark"] .notif-item.unread { background: rgba(79, 70, 229, .12); }
+            [data-theme="dark"] .notif-item.unread:hover { background: rgba(79, 70, 229, .2); }
+
+            /* 알림 타입 아이콘 */
+            .notif-icon {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                flex-shrink: 0;
+                margin-top: 1px;
+            }
+
+            .notif-icon-like    { background: #fee2e2; }
+            .notif-icon-comment { background: #dbeafe; }
+
+            /* 알림 내용 */
+            .notif-content { flex: 1; min-width: 0; }
+            .notif-msg {
+                font-size: 12px;
+                color: #374151;
+                line-height: 1.4;
+                word-break: break-all;
+            }
+
+            [data-theme="dark"] .notif-msg { color: #c7d2fe; }
+
+            .notif-time {
+                font-size: 11px;
+                color: #9ca3af;
+                margin-top: 3px;
+            }
+
+            /* 읽지 않음 점 표시 */
+            .notif-unread-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: #4f46e5;
+                flex-shrink: 0;
+                margin-top: 5px;
+            }
+
+            /* 빈 알림 */
+            .notif-empty {
+                padding: 32px 0;
+                text-align: center;
+                font-size: 13px;
+                color: #9ca3af;
+            }
+
+            /* 로딩 스피너 */
+            .notif-loading {
+                padding: 24px 0;
+                text-align: center;
+                font-size: 13px;
+                color: #9ca3af;
+            }
         </style>
     </th:block>
 </head>
@@ -209,7 +575,9 @@
     model 에서 자동 참조:
         isLoggedIn, username, isAdmin, profileImage
 -->
-<header class="site-header" th:fragment="siteHeader(boardName, rightMode)">
+<!-- siteHeader 프래그먼트: <header> + 알림 JS 스크립트를 th:block 으로 묶어 함께 포함 -->
+<th:block th:fragment="siteHeader(boardName, rightMode)">
+<header class="site-header">
 
     <!-- ── 왼쪽: 홈 아이콘 + 페이지 이름 ── -->
     <div style="display:flex; align-items:center; gap:10px;">
@@ -226,6 +594,57 @@
             <span class="header-board-name">Web01</span>
         </th:block>
     </div>
+
+    <!-- ── 우측 고정 유저 패널 (로그인 상태에서만 표시) ── -->
+    <th:block th:if="${isLoggedIn}">
+        <div class="user-side-panel">
+            <!-- 아바타 (클릭 시 프로필 → 비밀번호 재확인 후 진입) -->
+            <a th:href="@{/profile/verify}" class="usp-avatar" style="text-decoration:none;"
+               title="프로필로 이동">
+                <img th:if="${profileImage != null}" th:src="${profileImage}" alt="프로필"/>
+                <span th:unless="${profileImage != null}"
+                      th:text="${#strings.substring(username, 0, 1).toUpperCase()}"></span>
+            </a>
+            <!-- 아이디 -->
+            <div class="usp-username" th:text="${username}">username</div>
+            <!-- 권한 뱃지 -->
+            <div class="usp-role"
+                 th:classappend="${isAdmin} ? 'usp-role-admin' : 'usp-role-user'"
+                 th:text="${isAdmin} ? '👑 관리자' : '👤 일반 회원'"></div>
+
+            <div class="usp-divider"></div>
+
+            <!-- 내 작성글 -->
+            <a th:href="@{/my-posts}" class="usp-btn">📝 내 작성글</a>
+
+            <!-- 알림 버튼 + 드롭다운 -->
+            <div class="usp-notif-wrap">
+                <button class="usp-btn usp-btn-notif" id="notifBtn" onclick="toggleNotifPanel(event)">
+                    🔔 알림
+                    <span class="notif-badge" id="notifBadge" style="display:none"></span>
+                </button>
+
+                <!-- 알림 드롭다운 (클릭 시 표시) -->
+                <div class="notif-dropdown" id="notifDropdown" style="display:none">
+                    <div class="notif-dropdown-header">
+                        <span>알림</span>
+                        <button class="notif-read-all-btn" onclick="markAllNotifRead()">모두 읽음</button>
+                    </div>
+                    <div class="notif-list" id="notifList">
+                        <div class="notif-loading">불러오는 중...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="usp-divider"></div>
+
+            <!-- 로그아웃 -->
+            <form th:action="@{/auth/logout}" method="post" style="width:100%;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="usp-btn usp-btn-logout">🚪 로그아웃</button>
+            </form>
+        </div>
+    </th:block>
 
     <!-- ── 오른쪽: rightMode 분기 ── -->
     <div class="header-right">
@@ -253,7 +672,7 @@
                 </div>
             </div>
             <a th:href="@{/my-posts}" class="header-btn">📝 내 글 관리</a>
-            <a th:href="@{/profile}" class="header-btn">⚙️ 프로필</a>
+            <a th:href="@{/profile/verify}" class="header-btn">⚙️ 프로필</a>
             <a th:if="${isAdmin}" th:href="@{/admin}" class="header-btn">👑 관리자</a>
             <form th:action="@{/auth/logout}" method="post" style="display:inline;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -269,6 +688,180 @@
 
     </div>
 </header>
+<!-- ↑ </header> 닫힘, ↓ 알림 JS (th:block 프래그먼트 범위 안에 포함) -->
+<script>
+    // ── 알림 패널 ──────────────────────────────────────────────
+    (function () {
+        var notifOpen = false;
+
+        // 페이지 로드 시 읽지 않은 알림 수 뱃지 업데이트
+        document.addEventListener('DOMContentLoaded', function () {
+            var badge = document.getElementById('notifBadge');
+            if (!badge) return; // 비로그인 상태
+
+            fetchUnreadCount();
+        });
+
+        // 읽지 않은 알림 수 조회 후 뱃지 갱신
+        function fetchUnreadCount() {
+            fetch('/api/notifications/count', { credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    if (!data) return;
+                    updateBadge(data.count);
+                })
+                .catch(function () {});
+        }
+
+        function updateBadge(count) {
+            var badge = document.getElementById('notifBadge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // 알림 패널 열기/닫기 토글
+        window.toggleNotifPanel = function (e) {
+            e.stopPropagation();
+            var dropdown = document.getElementById('notifDropdown');
+            if (!dropdown) return;
+
+            notifOpen = !notifOpen;
+            dropdown.style.display = notifOpen ? 'block' : 'none';
+
+            if (notifOpen) {
+                loadNotifications();
+            }
+        };
+
+        // 외부 클릭 시 패널 닫기
+        document.addEventListener('click', function (e) {
+            if (!notifOpen) return;
+            var wrap = document.getElementById('notifDropdown');
+            var btn  = document.getElementById('notifBtn');
+            if (wrap && !wrap.contains(e.target) && btn && !btn.contains(e.target)) {
+                wrap.style.display = 'none';
+                notifOpen = false;
+            }
+        });
+
+        // 알림 목록 로드
+        function loadNotifications() {
+            var list = document.getElementById('notifList');
+            if (!list) return;
+            list.innerHTML = '<div class="notif-loading">불러오는 중...</div>';
+
+            fetch('/api/notifications', { credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : []; })
+                .then(function (items) {
+                    renderNotifications(items);
+                })
+                .catch(function () {
+                    list.innerHTML = '<div class="notif-empty">알림을 불러올 수 없습니다.</div>';
+                });
+        }
+
+        // 알림 목록 HTML 렌더링
+        function renderNotifications(items) {
+            var list = document.getElementById('notifList');
+            if (!list) return;
+
+            if (!items || items.length === 0) {
+                list.innerHTML = '<div class="notif-empty">새 알림이 없습니다.</div>';
+                return;
+            }
+
+            var html = '';
+            items.forEach(function (n) {
+                var icon    = n.type === 'LIKE' ? '❤️' : '💬';
+                var iconCls = n.type === 'LIKE' ? 'notif-icon-like' : 'notif-icon-comment';
+                var unread  = !n.read ? 'unread' : '';
+                var postHref = n.postId ? '/board/' + n.postId : '#';
+
+                html += '<div class="notif-item ' + unread + '" '
+                    + 'onclick="onNotifClick(event, ' + n.id + ', \'' + postHref + '\')">'
+                    + '<div class="notif-icon ' + iconCls + '">' + icon + '</div>'
+                    + '<div class="notif-content">'
+                    + '<div class="notif-msg">' + escapeHtml(n.message) + '</div>'
+                    + '<div class="notif-time">' + n.createdAt + '</div>'
+                    + '</div>'
+                    + (unread ? '<div class="notif-unread-dot"></div>' : '')
+                    + '</div>';
+            });
+            list.innerHTML = html;
+        }
+
+        // 알림 클릭 — 읽음 처리 후 게시글로 이동
+        window.onNotifClick = function (e, id, href) {
+            e.stopPropagation();
+            // 읽음 처리 (실패해도 이동은 진행)
+            fetch('/api/notifications/' + id + '/read', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: getCsrfHeader()
+            }).catch(function () {});
+
+            if (href && href !== '#') {
+                window.location.href = href;
+            } else {
+                // 게시글 없음 — 읽음 상태만 시각 반영
+                var items = document.querySelectorAll('.notif-item.unread');
+                items.forEach(function (el) {
+                    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(id)) {
+                        el.classList.remove('unread');
+                        var dot = el.querySelector('.notif-unread-dot');
+                        if (dot) dot.remove();
+                    }
+                });
+                updateBadge(0);
+            }
+        };
+
+        // 전체 읽음 처리
+        window.markAllNotifRead = function () {
+            fetch('/api/notifications/read-all', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: getCsrfHeader()
+            })
+            .then(function () {
+                updateBadge(0);
+                // 목록 다시 로드
+                loadNotifications();
+            })
+            .catch(function () {});
+        };
+
+        // Spring Security CSRF 토큰 헤더 구성
+        function getCsrfHeader() {
+            var meta = document.querySelector('meta[name="_csrf"]');
+            var hdr  = document.querySelector('meta[name="_csrf_header"]');
+            if (meta && hdr) {
+                var h = {};
+                h[hdr.getAttribute('content')] = meta.getAttribute('content');
+                return h;
+            }
+            // CSRF 메타태그가 없으면 쿠키 기반 fallback (없어도 무관)
+            return {};
+        }
+
+        // XSS 방지용 HTML 이스케이프
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    })();
+</script>
+
+</th:block>
+<!-- ↑ siteHeader 프래그먼트 닫힘 -->
 
 </body>
 </html>

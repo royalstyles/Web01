@@ -5,6 +5,7 @@ import com.jhpj.Web01.repository.*;
 
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
  * 게시글 CRUD, 댓글 CRUD, 좋아요 토글, 카테고리 조회, 내 글 목록 조회를 담당
  * 모든 쓰기 작업은 @Transactional, 조회 작업은 @Transactional(readOnly = true) 적용
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BoardService {
@@ -29,6 +31,7 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
+    private final NotificationService notificationService;
 
     // Quill.js 본문 HTML에서 storedName 추출용 패턴
     // 예) /uploads/images/uuid.jpg → "uuid.jpg",  /uploads/videos/uuid.mp4 → "uuid.mp4"
@@ -206,11 +209,20 @@ public class BoardService {
         Post post = getPostReadOnly(postId);
         User author = findUser(username);
 
-        return commentRepository.save(Comment.builder()
+        Comment saved = commentRepository.save(Comment.builder()
                 .post(post)
                 .author(author)
                 .content(content)
                 .build());
+
+        // 댓글 알림 생성 (본인 글 제외)
+        try {
+            notificationService.createCommentNotification(post, author);
+        } catch (Exception e) {
+            log.warn("댓글 알림 생성 실패 — postId={}, actor={}: {}", postId, username, e.getMessage());
+        }
+
+        return saved;
     }
 
     @Transactional
@@ -257,6 +269,13 @@ public class BoardService {
                     .post(post)
                     .user(user)
                     .build());
+
+            // 좋아요 알림 생성 (본인 글 제외)
+            try {
+                notificationService.createLikeNotification(post, user);
+            } catch (Exception e) {
+                log.warn("좋아요 알림 생성 실패 — postId={}, actor={}: {}", postId, username, e.getMessage());
+            }
             return true;
         }
     }

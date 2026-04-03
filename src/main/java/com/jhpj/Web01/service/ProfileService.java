@@ -111,6 +111,15 @@ public class ProfileService {
         userRepository.save(user);
     }
 
+    /**
+     * 현재 비밀번호 일치 여부 확인 — 프로필 접근 전 본인 인증에 사용
+     * @return true: 일치, false: 불일치
+     */
+    public boolean verifyPassword(String username, String rawPassword) {
+        User user = findByUsername(username);
+        return passwordEncoder.matches(rawPassword, user.getPassword());
+    }
+
     /** 이메일 변경 요청 — 새 이메일로 인증 링크 발송 */
     @Transactional
     public void requestEmailChange(String username, String newEmail, String baseUrl) {

@@ -3,6 +3,7 @@ package com.jhpj.Web01.controller;
 import com.jhpj.Web01.service.ProfileService;
 import com.jhpj.Web01.util.WebUtils;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +18,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 로그인한 사용자 본인의 프로필 이미지/아이디/비밀번호/이메일 변경을 처리
  * 모든 /profile/** 경로는 SecurityConfig 에서 인증 필수로 설정
  * 아이디 변경 시 세션 무효화 후 재로그인 유도, 이메일 변경 시 인증 메일 발송
+ *
+ * [본인 확인] 프로필 페이지 접근 전 비밀번호 재확인 필수
+ *   - 세션 속성 PROFILE_VERIFIED_AT 에 검증 시각(ms) 저장
+ *   - 유효 시간: 10분 (VERIFY_VALID_MS)
  */
 @Controller
 @RequestMapping("/profile")
@@ -25,16 +30,76 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    /** 프로필 페이지 */
-    @GetMapping
-    public String profilePage(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        // ── 헤더 프래그먼트용 ──
+    /** 세션에서 사용할 속성명 및 유효 시간 (10분) */
+    private static final String SESSION_KEY   = "PROFILE_VERIFIED_AT";
+    private static final long   VERIFY_VALID_MS = 10 * 60 * 1000L;
+
+    /**
+     * 세션에 유효한 본인 확인 기록이 있는지 검사
+     * @return true: 10분 이내 인증 완료 상태
+     */
+    private boolean isVerified(HttpSession session) {
+        Long verifiedAt = (Long) session.getAttribute(SESSION_KEY);
+        return verifiedAt != null
+                && (System.currentTimeMillis() - verifiedAt) < VERIFY_VALID_MS;
+    }
+
+    /** 헤더 프래그먼트용 공통 model 속성 주입 */
+    private void addHeaderAttributes(UserDetails userDetails, Model model) {
         model.addAttribute("isLoggedIn", true);
-        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("username",   userDetails.getUsername());
         model.addAttribute("isAdmin",
                 userDetails.getAuthorities().stream()
                         .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+    }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // 본인 확인 (비밀번호 재입력)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** 본인 확인 폼 표시 */
+    @GetMapping("/verify")
+    public String verifyForm(@AuthenticationPrincipal UserDetails userDetails,
+                             HttpSession session,
+                             Model model) {
+        // 이미 인증된 상태라면 바로 프로필로 이동
+        if (isVerified(session)) {
+            return "redirect:/profile";
+        }
+        addHeaderAttributes(userDetails, model);
+        return "profile-verify";
+    }
+
+    /** 본인 확인 처리 — 비밀번호 일치 시 세션에 타임스탬프 저장 */
+    @PostMapping("/verify")
+    public String verifySubmit(@AuthenticationPrincipal UserDetails userDetails,
+                               @RequestParam String password,
+                               HttpSession session,
+                               Model model) {
+        if (profileService.verifyPassword(userDetails.getUsername(), password)) {
+            // 인증 성공 — 현재 시각 저장
+            session.setAttribute(SESSION_KEY, System.currentTimeMillis());
+            return "redirect:/profile";
+        }
+        // 인증 실패 — 오류 메시지와 함께 폼 재표시
+        addHeaderAttributes(userDetails, model);
+        model.addAttribute("errorMsg", "비밀번호가 올바르지 않습니다.");
+        return "profile-verify";
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 프로필 페이지
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** 프로필 페이지 — 본인 확인이 안 된 경우 verify 페이지로 리다이렉트 */
+    @GetMapping
+    public String profilePage(@AuthenticationPrincipal UserDetails userDetails,
+                              HttpSession session,
+                              Model model) {
+        if (!isVerified(session)) {
+            return "redirect:/profile/verify";
+        }
+        addHeaderAttributes(userDetails, model);
         model.addAttribute("user", profileService.findByUsername(userDetails.getUsername()));
         return "profile";
     }
