@@ -3,7 +3,6 @@ package com.jhpj.Web01.controller;
 import com.jhpj.Web01.entity.Category;
 import com.jhpj.Web01.entity.Comment;
 import com.jhpj.Web01.entity.Post;
-import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.AdminService;
 import com.jhpj.Web01.service.BoardService;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ import java.util.Set;
 public class BoardController {
 
     private final BoardService boardService;
-    private final UserRepository userRepository;
     private final AdminService adminService;
 
     // ── 목록 ─────────────────────────────────────────────────
@@ -44,9 +42,6 @@ public class BoardController {
                        @RequestParam(defaultValue = "0") int page,
                        @AuthenticationPrincipal UserDetails userDetails,
                        Model model) {
-
-        // ── 헤더 프래그먼트용 로그인 정보 주입 ──
-        addHeaderAttributes(userDetails, model);
 
         Page<Post> postPage = boardService.getPostList(categoryId, keyword, searchType, page);
 
@@ -85,7 +80,6 @@ public class BoardController {
     @GetMapping("/write")
     public String writeForm(@AuthenticationPrincipal UserDetails userDetails,
                             Model model) {
-        addHeaderAttributes(userDetails, model);
         model.addAttribute("categories", boardService.findAllCategories());
         return "board/board-write";
     }
@@ -115,8 +109,6 @@ public class BoardController {
     public String view(@PathVariable Long postId,
                        @AuthenticationPrincipal UserDetails userDetails,
                        Model model) {
-
-        addHeaderAttributes(userDetails, model);
 
         Post post = boardService.getPost(postId);
         List<Comment> comments = boardService.getComments(postId);
@@ -154,8 +146,6 @@ public class BoardController {
                            @AuthenticationPrincipal UserDetails userDetails,
                            Model model,
                            RedirectAttributes ra) {
-
-        addHeaderAttributes(userDetails, model); // ← 추가
 
         Post post = boardService.getPostReadOnly(postId);
 
@@ -272,18 +262,4 @@ public class BoardController {
         }
     }
 
-    // ── 헤더 프래그먼트용 로그인 정보 공통 주입 ──────────────
-    private void addHeaderAttributes(UserDetails userDetails, Model model) {
-        if (userDetails != null) {
-            model.addAttribute("isLoggedIn", true);
-            model.addAttribute("username", userDetails.getUsername());
-            model.addAttribute("isAdmin",
-                    userDetails.getAuthorities().stream()
-                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
-            userRepository.findByUsername(userDetails.getUsername())
-                    .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));
-        } else {
-            model.addAttribute("isLoggedIn", false);
-        }
-    }
 }

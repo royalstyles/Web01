@@ -1,5 +1,6 @@
 package com.jhpj.Web01.service;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,6 +46,17 @@ public class LoginAttemptService {
         }
 
         return data[0] >= MAX_ATTEMPTS;
+    }
+
+    /**
+     * 만료된 로그인 실패 기록 주기 정리 (1시간마다)
+     * isBlocked() 호출 없이도 메모리가 지속 증가하는 문제를 방지
+     */
+    @Scheduled(fixedRate = 60 * 60 * 1000)
+    public void cleanExpiredEntries() {
+        long lockMs = TimeUnit.MINUTES.toMillis(LOCK_TIME_MINUTES);
+        attemptsCache.entrySet().removeIf(entry ->
+                System.currentTimeMillis() - entry.getValue()[1] > lockMs);
     }
 
     /** 남은 잠금 시간(초) 반환 */

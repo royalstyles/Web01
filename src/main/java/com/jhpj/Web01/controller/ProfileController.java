@@ -44,15 +44,6 @@ public class ProfileController {
                 && (System.currentTimeMillis() - verifiedAt) < VERIFY_VALID_MS;
     }
 
-    /** 헤더 프래그먼트용 공통 model 속성 주입 */
-    private void addHeaderAttributes(UserDetails userDetails, Model model) {
-        model.addAttribute("isLoggedIn", true);
-        model.addAttribute("username",   userDetails.getUsername());
-        model.addAttribute("isAdmin",
-                userDetails.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
-    }
-
     // ──────────────────────────────────────────────────────────────────────────
     // 본인 확인 (비밀번호 재입력)
     // ──────────────────────────────────────────────────────────────────────────
@@ -66,7 +57,6 @@ public class ProfileController {
         if (isVerified(session)) {
             return "redirect:/profile";
         }
-        addHeaderAttributes(userDetails, model);
         return "profile-verify";
     }
 
@@ -82,7 +72,6 @@ public class ProfileController {
             return "redirect:/profile";
         }
         // 인증 실패 — 오류 메시지와 함께 폼 재표시
-        addHeaderAttributes(userDetails, model);
         model.addAttribute("errorMsg", "비밀번호가 올바르지 않습니다.");
         return "profile-verify";
     }
@@ -99,7 +88,6 @@ public class ProfileController {
         if (!isVerified(session)) {
             return "redirect:/profile/verify";
         }
-        addHeaderAttributes(userDetails, model);
         model.addAttribute("user", profileService.findByUsername(userDetails.getUsername()));
         return "profile";
     }

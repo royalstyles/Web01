@@ -48,9 +48,7 @@ public class ProfileService {
 
         // 기존 이미지 삭제
         if (user.getProfileImage() != null) {
-            String oldStoredName = user.getProfileImage()
-                    .replaceAll(".*/profiles/", "");
-            fileService.deleteProfileImage(oldStoredName);
+            fileService.deleteProfileImage(extractStoredName(user.getProfileImage()));
         }
 
         PostFile saved = fileService.uploadProfileImage(file, user);
@@ -65,9 +63,7 @@ public class ProfileService {
         if (user.getProfileImage() == null) {
             throw new IllegalArgumentException("등록된 프로필 이미지가 없습니다.");
         }
-        String oldStoredName = user.getProfileImage()
-                .replaceAll(".*/profiles/", "");
-        fileService.deleteProfileImage(oldStoredName);
+        fileService.deleteProfileImage(extractStoredName(user.getProfileImage()));
         user.setProfileImage(null);
         userRepository.save(user);
     }
@@ -149,6 +145,11 @@ public class ProfileService {
 
         String verifyUrl = baseUrl + "/profile/email/verify?token=" + token;
         emailService.sendEmailChangeVerification(newEmail, user.getUsername(), verifyUrl);
+    }
+
+    /** 프로필 이미지 URL 에서 저장 파일명만 추출 (예: /uploads/profiles/abc.jpg → abc.jpg) */
+    private String extractStoredName(String imageUrl) {
+        return imageUrl.replaceAll(".*/profiles/", "");
     }
 
     /** 이메일 변경 인증 완료 처리 */

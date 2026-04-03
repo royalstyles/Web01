@@ -1,8 +1,6 @@
 package com.jhpj.Web01.controller;
 
 import com.jhpj.Web01.entity.Post;
-import com.jhpj.Web01.entity.User;
-import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,7 +17,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class MyPostsController {
 
     private final BoardService boardService;
-    private final UserRepository userRepository;
 
     /** 내가 쓴 글 목록 */
     @GetMapping
@@ -27,17 +24,6 @@ public class MyPostsController {
                           @RequestParam(defaultValue = "0") int page,
                           Model model) {
         String username = userDetails.getUsername();
-
-        // 헤더 프래그먼트용 속성
-        boolean isAdmin = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        model.addAttribute("isLoggedIn", true);
-        model.addAttribute("username", username);
-        model.addAttribute("isAdmin", isAdmin);
-
-        // 프로필 이미지
-        userRepository.findByUsername(username).ifPresent(user ->
-                model.addAttribute("profileImage", user.getProfileImage()));
 
         // 내 글 목록 (페이징)
         Page<Post> postPage = boardService.getMyPosts(username, page);
