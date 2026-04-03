@@ -1,7 +1,7 @@
 # Web01 — Spring Boot 웹 애플리케이션
 
 Spring Boot 3 기반의 커뮤니티 웹 애플리케이션입니다.  
-Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 썸네일, 타입별 검색, 댓글, 좋아요), **라이트/다크 테마**, GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
+Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 썸네일, 타입별 검색, 댓글, 좋아요), **알림 시스템**, **고정 공지 게시판**, **유저 사이드 패널**, **라이트/다크 테마**, GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
 
 ---
 
@@ -55,11 +55,12 @@ src/main/java/com/jhpj/Web01/
 ├── controller/
 │   ├── AuthController.java                # 로그인 / 회원가입 / 이메일 인증
 │   ├── HomeController.java                # 홈 (게시판 목록 통합)
-│   ├── BoardController.java               # 게시판 CRUD + 댓글 + 좋아요
+│   ├── BoardController.java               # 게시판 CRUD + 댓글 + 좋아요 + 공지 표시
 │   ├── FileUploadController.java          # 이미지 · 동영상 업로드 API
-│   ├── AdminController.java               # 관리자 대시보드
+│   ├── AdminController.java               # 관리자 대시보드 + 공지 관리 + 카테고리 관리
 │   ├── MyPostsController.java             # 내 글 관리
-│   └── ProfileController.java             # 프로필 관리 + 이미지 업로드
+│   ├── ProfileController.java             # 프로필 관리 + 이미지 업로드 + 비밀번호 재인증
+│   └── NotificationController.java        # 알림 REST API
 ├── entity/
 │   ├── User.java                          # 회원 엔티티 (UserDetails 구현)
 │   ├── Post.java                          # 게시글 엔티티
@@ -67,6 +68,8 @@ src/main/java/com/jhpj/Web01/
 │   ├── Category.java                      # 게시판 카테고리 엔티티
 │   ├── PostLike.java                      # 좋아요 엔티티 (복합 UNIQUE)
 │   ├── PostFile.java                      # 파일 엔티티 (이미지/동영상)
+│   ├── Notice.java                        # 공지 엔티티 (다대다 카테고리 연결)
+│   ├── Notification.java                  # 알림 엔티티 (좋아요/댓글)
 │   ├── EmailVerificationToken.java        # 회원가입 이메일 인증 토큰
 │   └── EmailChangeToken.java              # 이메일 변경 인증 토큰
 ├── repository/
@@ -76,15 +79,19 @@ src/main/java/com/jhpj/Web01/
 │   ├── CategoryRepository.java
 │   ├── PostLikeRepository.java
 │   ├── PostFileRepository.java            # 고아 파일 조회 쿼리 포함
+│   ├── NoticeRepository.java              # 공지 조회 (EntityGraph, EXISTS 서브쿼리)
+│   ├── NotificationRepository.java        # 알림 조회 + 일괄 읽음 처리
 │   ├── EmailVerificationTokenRepository.java
 │   └── EmailChangeTokenRepository.java
 ├── service/
 │   ├── CustomUserDetailsService.java      # 인증 + 회원가입
-│   ├── BoardService.java                  # 게시글/댓글/좋아요/파일 연결 로직
+│   ├── BoardService.java                  # 게시글/댓글/좋아요/파일 + 알림 발송 연동
 │   ├── FileService.java                   # 파일 업로드 · 삭제 · 고아 정리 스케줄러
 │   ├── EmailService.java                  # 이메일 발송 (인증 / 변경)
-│   ├── AdminService.java                  # 관리자 회원 관리 서비스
-│   ├── ProfileService.java                # 프로필 변경 + 이미지 서비스
+│   ├── AdminService.java                  # 관리자 회원 관리 + 공지 CRUD + 카테고리 CRUD
+│   ├── ProfileService.java                # 프로필 변경 + 이미지 서비스 + 비밀번호 검증
+│   ├── NotificationService.java           # 알림 생성/조회/읽음 처리
+│   ├── QuasarZoneImportService.java       # 퀘이사존 특가/예판 크롤링 (1시간 주기)
 │   └── LoginAttemptService.java           # 로그인 실패 횟수 관리
 └── util/
     └── PasswordValidator.java             # 비밀번호 정책 검증
@@ -102,7 +109,14 @@ src/main/resources/
 │   ├── V6__board_post_likes.sql           # 좋아요 증감 트리거 포함
 │   ├── V7__board_post_files.sql
 │   ├── V8__user_profile_image.sql
-│   └── V9__categories_sort_order_update.sql
+│   ├── V9__categories_sort_order_update.sql
+│   ├── V10__post_reads.sql                # 게시글 읽음 표시
+│   ├── V11__posts_add_source_url.sql      # 외부 크롤링 원본 URL
+│   ├── V12__persistent_logins.sql         # Remember-Me 영속 세션
+│   ├── V13__notifications.sql             # 알림 테이블
+│   ├── V14__notices.sql                   # 공지 테이블
+│   ├── V15__notices_add_category.sql      # 공지 단일 카테고리 (V16에서 대체)
+│   └── V16__notice_categories_many_to_many.sql  # 공지-카테고리 다대다 조인 테이블
 ├── static/
 │   ├── css/
 │   │   └── theme.css                      # 라이트/다크 모드 CSS 변수 & 오버라이드
@@ -110,18 +124,18 @@ src/main/resources/
 │   │   └── theme.js                       # FOUC 방지 테마 복원 스크립트
 │   └── favicon.svg
 └── templates/
-    ├── admin.html                         # 관리자 대시보드
+    ├── admin.html                         # 관리자 대시보드 (공지/카테고리/회원 관리)
     ├── my-posts.html                      # 내 글 관리
     ├── profile.html                       # 프로필 수정
-    ├── profile-verify-result.html
     ├── fragments/
-    │   └── header.html                    # 공통 헤더 (siteHeader / headerStyles 프래그먼트)
+    │   └── header.html                    # 공통 헤더 + 유저 사이드 패널 + 알림
     ├── auth/
     │   ├── login.html
     │   ├── signup.html
+    │   ├── profile-verify.html            # 프로필 접근 전 비밀번호 재인증
     │   └── verify-result.html
     └── board/
-        ├── board-list.html                # 게시판 목록 + 홈 (로그인/비로그인 통합)
+        ├── board-list.html                # 게시판 목록 + 상단 고정 공지 + 홈
         ├── board-view.html                # 게시글 상세 (댓글, 좋아요 AJAX)
         └── board-write.html               # 게시글 작성/수정 (Quill.js 에디터)
 ```
@@ -134,7 +148,8 @@ src/main/resources/
 - 커스텀 로그인 페이지 (`/auth/login`)
 - BCrypt 비밀번호 암호화
 - 로그아웃 시 세션 및 쿠키 완전 삭제 (CSRF 토큰 방식 POST)
-- 아이디 기억하기 (localStorage 저장)
+- 아이디 기억하기 (localStorage 저장, `form.requestSubmit()` 이벤트 연동)
+- Remember-Me 영속 로그인 (DB 기반 `persistent_logins`)
 
 ### 이메일 인증
 - 회원가입 시 즉시 인증 메일 발송 (Gmail SMTP)
@@ -167,8 +182,39 @@ src/main/resources/
 - **댓글**: AJAX 비동기 등록/수정/삭제 (본인 + 관리자 수정·삭제 가능)
 - **좋아요**: AJAX 토글, Oracle 트리거로 `POSTS.LIKE_COUNT` 자동 동기화
 - **조회수**: 상세 페이지 접근 시 자동 증가
+- **읽음 표시**: 읽은 게시글 목록에서 시각적으로 구분
 - **수정/삭제**: 작성자 또는 관리자만 가능
 - **비로그인 공개**: 목록 및 상세 읽기 가능, 작성/댓글/좋아요는 로그인 필요
+
+### 공지 시스템
+- 관리자가 게시판 목록 **상단에 고정 표시**되는 공지 등록/수정/삭제
+- **노출 게시판 다중 선택**: 태그 UI로 카테고리 복수 선택 (선택 없음 = 전체 게시판)
+- **정렬 순서 변경**: ▲▼ 버튼으로 공지 순서 조정
+- **노출 여부 토글**: 삭제 없이 숨김/표시 전환
+- 공지 클릭 시 모달로 내용 표시
+- 1페이지에서만 공지 표시 (페이지 2 이상 미표시)
+
+### 알림 시스템
+- 내 게시글에 **댓글** 또는 **좋아요**가 달리면 실시간 알림 생성
+- 헤더 유저 사이드 패널의 🔔 버튼으로 알림 드롭다운 표시
+- 읽지 않은 알림 수 뱃지 표시
+- 알림 클릭 → 해당 게시글로 이동 + 읽음 처리
+- 전체 읽음 처리 지원
+- 자기 자신 행동(자기 글에 좋아요/댓글)은 알림 생성 제외
+- REST API: `GET /api/notifications`, `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all`
+
+### 유저 사이드 패널
+- 로그인 시 화면 우측에 고정 표시 (스크롤 따라옴)
+- 프로필 아바타, 아이디, 권한 뱃지, 내 작성글 링크, 알림 버튼, 로그아웃
+- 메인 콘텐츠 영역 오른쪽 10px 위치에 동적 배치 (JS `getBoundingClientRect`)
+- 공간 부족 시 자동 숨김
+
+### 프로필 관리 (`/profile`)
+- **비밀번호 재인증 게이트**: 프로필 접근 전 비밀번호 확인 (10분 세션 유지)
+- **프로필 이미지**: 카메라 아이콘 클릭 → 즉시 업로드, 삭제 가능
+- **아이디 변경**: 중복 검사 후 변경 → 자동 로그아웃 (세션 무효화)
+- **비밀번호 변경**: 현재 비밀번호 확인 + 실시간 강도 표시 바
+- **이메일 변경**: 새 이메일로 인증 링크 발송 → 클릭 후 변경 완료 (Race Condition 방지)
 
 ### 파일 업로드
 - 저장 경로: `APP_UPLOAD_PATH` 환경변수 지정 (OS별 분리)
@@ -186,12 +232,14 @@ src/main/resources/
 - 통계 카드: 전체 회원 / 관리자 / 이메일 미인증 / 잠금 계정
 - 권한 변경 (`ROLE_USER` ↔ `ROLE_ADMIN`), 계정 잠금 해제, 이메일 인증 강제 완료, 회원 삭제
 - 자기 자신 권한 변경 및 삭제 방지
+- **공지 관리**: 등록/수정/삭제, 순서 변경(▲▼), 노출 여부 토글, 노출 게시판 다중 선택
+- **카테고리 관리**: 게시판 카테고리 추가/수정/삭제, 정렬 순서 관리
+- **퀘이사존 수집**: 수동 트리거 + 자동 1시간 주기 크롤링
 
-### 프로필 관리 (`/profile`)
-- **프로필 이미지**: 카메라 아이콘 클릭 → 즉시 업로드, 삭제 가능
-- **아이디 변경**: 중복 검사 후 변경 → 자동 로그아웃 (세션 무효화)
-- **비밀번호 변경**: 현재 비밀번호 확인 + 실시간 강도 표시 바
-- **이메일 변경**: 새 이메일로 인증 링크 발송 → 클릭 후 변경 완료 (Race Condition 방지)
+### 퀘이사존 특가/예판 크롤링
+- 퀘이사존 특가·예판 게시글 자동 수집 (1시간 주기 스케줄러)
+- 관리자 화면에서 수동 실행 가능 (최대 5페이지)
+- 원본 URL 저장 (`SOURCE_URL`), 중복 수집 방지
 
 ---
 
@@ -285,6 +333,13 @@ JPA `ddl-auto=validate`, **Flyway**로 DDL 관리. 앱 시작 시 `db/migration/
 | V7 | `V7__board_post_files.sql` | POST_FILES (임시 업로드 지원) |
 | V8 | `V8__user_profile_image.sql` | USERS.PROFILE_IMAGE 컬럼 추가 |
 | V9 | `V9__categories_sort_order_update.sql` | 카테고리 정렬 인덱스 추가 |
+| V10 | `V10__post_reads.sql` | POST_READS 테이블 (읽음 표시) |
+| V11 | `V11__posts_add_source_url.sql` | POSTS.SOURCE_URL 컬럼 (크롤링 원본 URL) |
+| V12 | `V12__persistent_logins.sql` | PERSISTENT_LOGINS (Remember-Me) |
+| V13 | `V13__notifications.sql` | NOTIFICATIONS 테이블 (좋아요/댓글 알림) |
+| V14 | `V14__notices.sql` | NOTICES 테이블 + NOTICES_SEQ |
+| V15 | `V15__notices_add_category.sql` | NOTICES.CATEGORY_ID 단일 컬럼 (V16에서 대체) |
+| V16 | `V16__notice_categories_many_to_many.sql` | NOTICE_CATEGORIES 조인 테이블 (공지-카테고리 N:M) |
 
 > ⚠️ 기존 DB에 처음 Flyway를 적용할 때는 `baseline-on-migrate=true`, `baseline-version=9`로 설정하세요.
 
@@ -312,6 +367,35 @@ JPA `ddl-auto=validate`, **Flyway**로 DDL 관리. 앱 시작 시 `db/migration/
 | FILE_URL | VARCHAR2(1000) | 브라우저 접근 URL |
 | FILE_TYPE | VARCHAR2(10) | IMAGE / VIDEO |
 | FILE_SIZE | NUMBER | 바이트 단위 |
+
+**NOTICES**
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| ID | NUMBER | PK (NOTICES_SEQ) |
+| AUTHOR_ID | NUMBER | FK → USERS.ID (CASCADE DELETE) |
+| TITLE | VARCHAR2(200) | 공지 제목 |
+| CONTENT | CLOB | 공지 본문 |
+| SORT_ORDER | NUMBER | 표시 순서 (낮을수록 상단) |
+| ACTIVE | NUMBER(1) | 노출 여부 |
+| CREATED_AT | TIMESTAMP | 작성일 |
+
+**NOTICE_CATEGORIES** (공지-카테고리 N:M 조인 테이블)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| NOTICE_ID | NUMBER | FK → NOTICES.ID (CASCADE DELETE) |
+| CATEGORY_ID | NUMBER | FK → CATEGORIES.ID (CASCADE DELETE) |
+
+**NOTIFICATIONS**
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| ID | NUMBER | PK (NOTIFICATIONS_SEQ) |
+| RECIPIENT_ID | NUMBER | FK → USERS.ID (CASCADE DELETE) |
+| ACTOR_ID | NUMBER | FK → USERS.ID (SET NULL) |
+| POST_ID | NUMBER | FK → POSTS.ID (CASCADE DELETE) |
+| TYPE | VARCHAR2(20) | LIKE / COMMENT |
+| MESSAGE | VARCHAR2(500) | 알림 메시지 |
+| IS_READ | NUMBER(1) | 읽음 여부 |
+| CREATED_AT | TIMESTAMP | 생성일 |
 
 ---
 
@@ -486,6 +570,7 @@ master push
 - 비밀번호 정책: 영문 + 숫자 + 특수문자, 8자 이상
 - 로그인 5회 실패 시 10분 잠금
 - 이메일 미인증 계정 로그인 차단 (`DisabledException` → `?unverified=true`)
+- **프로필 접근 시 비밀번호 재인증** (10분 세션 유효, 만료 시 재인증 요구)
 - DB 비밀번호 · 메일 비밀번호는 `application-secret.properties`로 분리 (Git 제외)
 - 파일 업로드: MIME 타입 화이트리스트 검증, 크기 제한 (이미지 20MB / 동영상 500MB)
 - UUID 기반 저장 파일명으로 경로 추측 공격 방지
