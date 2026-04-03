@@ -198,10 +198,8 @@
                 position: fixed;
                 top: 50%;           /* 뷰포트 세로 중앙 */
                 transform: translateY(-50%);
-                /* 게시판 콘텐츠(max-width:1000px) 오른쪽 끝 + 10px
-                   position:fixed 기준 50% = 뷰포트 절반
-                   → 콘텐츠 우측 끝(500px) + 여백(10px) = 510px */
-                left: calc(50% + 510px);
+                /* left 값은 JS(positionUserPanel)가 .wrapper 우측 끝 + 10px 으로 동적 설정 */
+                left: -9999px;      /* JS 실행 전 화면 밖에 숨김 */
                 right: auto;
                 width: 180px;
                 background: white;
@@ -357,11 +355,10 @@
                 color: #fecaca;
             }
 
-            /* 콘텐츠(1000px) + 양쪽 패딩(20px) + 패널(180px) + 여백(10px) × 2
-               = 1000 + 40 + 180 + 20 = 1240px 이하에서 숨김 */
-            @media (max-width: 1240px) {
+            /* 모바일에서는 항상 숨김 (JS 위치 계산 불필요) */
+            @media (max-width: 768px) {
                 .user-side-panel {
-                    display: none;
+                    display: none !important;
                 }
             }
 
@@ -690,6 +687,45 @@
 </header>
 <!-- ↑ </header> 닫힘, ↓ 알림 JS (th:block 프래그먼트 범위 안에 포함) -->
 <script>
+    // ── 유저 패널 위치 동적 계산 ───────────────────────────────
+    (function () {
+        /**
+         * .wrapper 요소의 실제 우측 끝 좌표를 읽어
+         * 유저 패널을 그 오른쪽 10px 에 배치.
+         * 공간 부족(패널이 뷰포트 밖으로 나가는 경우) 시 숨김.
+         */
+        function positionUserPanel() {
+            var panel = document.querySelector('.user-side-panel');
+            if (!panel) return;
+
+            var wrapper = document.querySelector('.wrapper');
+            if (!wrapper) {
+                // .wrapper 가 없는 페이지는 패널 숨김
+                panel.style.display = 'none';
+                return;
+            }
+
+            var rect       = wrapper.getBoundingClientRect();
+            var panelWidth = panel.offsetWidth;
+            var leftPos    = rect.right + 10;  // wrapper 우측 끝 + 10px
+
+            // 패널이 뷰포트 오른쪽으로 넘어가는 경우 숨김
+            if (leftPos + panelWidth > window.innerWidth - 10) {
+                panel.style.display = 'none';
+            } else {
+                panel.style.display = 'flex';
+                panel.style.left    = leftPos + 'px';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            positionUserPanel();
+        });
+
+        // 창 크기 변경 시 재계산
+        window.addEventListener('resize', positionUserPanel);
+    })();
+
     // ── 알림 패널 ──────────────────────────────────────────────
     (function () {
         var notifOpen = false;
