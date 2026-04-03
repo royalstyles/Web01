@@ -4,6 +4,7 @@ import com.jhpj.Web01.entity.Category;
 import com.jhpj.Web01.entity.Comment;
 import com.jhpj.Web01.entity.Post;
 import com.jhpj.Web01.repository.UserRepository;
+import com.jhpj.Web01.service.AdminService;
 import com.jhpj.Web01.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ public class BoardController {
 
     private final BoardService boardService;
     private final UserRepository userRepository;
+    private final AdminService adminService;
 
     // ── 목록 ─────────────────────────────────────────────────
 
@@ -72,6 +74,8 @@ public class BoardController {
         model.addAttribute("currentPage",      page);
         model.addAttribute("currentBoardName", boardName);
         model.addAttribute("readPostIds",      readPostIds);
+        // 공지는 1페이지(page=0)에서만 표시
+        model.addAttribute("notices", page == 0 ? adminService.findActiveNotices(categoryId) : List.of());
 
         return "board/board-list";
     }

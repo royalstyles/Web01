@@ -137,6 +137,62 @@
         tr.is-read .post-title a { font-weight: 400; color: #6b7280; }
         tr.is-read .unread-dot   { display: none; }
 
+        /* 공지 행 */
+        .notice-row td { background: #fffbeb; }
+        .notice-row:hover td { background: #fef9ec !important; }
+        .badge-notice {
+            display: inline-flex; align-items: center;
+            padding: 2px 8px; border-radius: 4px;
+            font-size: 11px; font-weight: 700;
+            background: #f59e0b; color: white;
+            margin-right: 6px; flex-shrink: 0;
+        }
+        .notice-title-link {
+            color: #78350f; font-weight: 600;
+            text-decoration: none; cursor: pointer;
+        }
+        .notice-title-link:hover { color: #d97706; text-decoration: underline; }
+
+        /* 공지 모달 */
+        .notice-modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.45); z-index: 300;
+            align-items: center; justify-content: center;
+        }
+        .notice-modal-overlay.open { display: flex; }
+        .notice-modal-box {
+            background: white; border-radius: 16px; padding: 32px;
+            width: 560px; max-width: 90vw;
+            max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 8px 40px rgba(0,0,0,.2);
+            animation: noticeModalIn .18s ease;
+        }
+        @keyframes noticeModalIn {
+            from { opacity: 0; transform: scale(.95); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .notice-modal-title {
+            font-size: 17px; font-weight: 700; color: #1e1b4b;
+            margin-bottom: 8px;
+        }
+        .notice-modal-meta {
+            font-size: 12px; color: #9ca3af; margin-bottom: 18px;
+            padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;
+        }
+        .notice-modal-content {
+            font-size: 14px; color: #374151; line-height: 1.7;
+            white-space: pre-line; word-break: break-word;
+        }
+        .notice-modal-close {
+            margin-top: 24px; text-align: right;
+        }
+        .notice-modal-close button {
+            padding: 8px 20px; background: #f1f5f9; color: #374151;
+            border: none; border-radius: 8px; font-size: 14px;
+            cursor: pointer; font-family: inherit;
+        }
+        .notice-modal-close button:hover { background: #e2e8f0; }
+
         /* 빈 목록 */
         .empty { text-align: center; padding: 60px 0; color: #9ca3af; font-size: 15px; }
 
@@ -192,6 +248,37 @@
         </form>
     </div>
 
+    <!-- 공지 상세 모달 (공지가 있을 때만 렌더링) -->
+    <th:block th:if="${notices != null and !#lists.isEmpty(notices)}">
+        <div id="notice-modal" class="notice-modal-overlay" onclick="closeNoticeModal(event)">
+            <div class="notice-modal-box">
+                <div class="badge-notice" style="display:inline-flex; margin-bottom:10px;">공지</div>
+                <div class="notice-modal-title" id="notice-modal-title"></div>
+                <div class="notice-modal-meta" id="notice-modal-meta"></div>
+                <div class="notice-modal-content" id="notice-modal-content"></div>
+                <div class="notice-modal-close">
+                    <button onclick="document.getElementById('notice-modal').classList.remove('open')">닫기</button>
+                </div>
+            </div>
+        </div>
+        <script>
+            function openNoticeModal(row) {
+                document.getElementById('notice-modal-title').textContent   = row.dataset.title   || '';
+                document.getElementById('notice-modal-meta').textContent    = row.dataset.date    + ' 작성';
+                document.getElementById('notice-modal-content').textContent = row.dataset.content || '';
+                document.getElementById('notice-modal').classList.add('open');
+            }
+            function closeNoticeModal(e) {
+                if (e.target === document.getElementById('notice-modal')) {
+                    document.getElementById('notice-modal').classList.remove('open');
+                }
+            }
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') document.getElementById('notice-modal') && document.getElementById('notice-modal').classList.remove('open');
+            });
+        </script>
+    </th:block>
+
     <!-- 게시글 목록 -->
     <div class="table-card">
         <div class="table-top">
@@ -219,6 +306,30 @@
             </tr>
             </thead>
             <tbody>
+            <!-- ── 공지 행 (테이블 최상단 고정) ── -->
+            <tr class="notice-row" th:each="notice : ${notices}"
+                th:data-title="${notice.title}"
+                th:data-content="${notice.content != null ? notice.content : ''}"
+                th:data-date="${#temporals.format(notice.createdAt, 'yyyy.MM.dd')}"
+                onclick="openNoticeModal(this)"
+                style="cursor:pointer;">
+                <td class="num hide-sm" style="text-align:center;">
+                    <span class="badge-notice">공지</span>
+                </td>
+                <td class="post-title">
+                    <span class="notice-title-link" th:text="${notice.title}"></span>
+                </td>
+                <td class="num hide-sm" style="text-align:center; color:#b45309;">관리자</td>
+                <td class="num hide-sm" style="text-align:center;" th:text="${#temporals.format(notice.createdAt, 'yyyy.MM.dd')}"></td>
+                <td class="num" style="text-align:center;">—</td>
+                <td class="num" style="text-align:center;">—</td>
+            </tr>
+            <!-- ── 공지와 일반 게시글 사이 구분선 ── -->
+            <tr th:if="${notices != null and !#lists.isEmpty(notices)}"
+                style="height:2px; background:linear-gradient(to right,#fde68a,#fef3c7,#fde68a); pointer-events:none;">
+                <td colspan="6" style="padding:0; border:none;"></td>
+            </tr>
+
             <tr th:if="${#lists.isEmpty(posts)}">
                 <td colspan="6" class="empty">📭 게시글이 없습니다.</td>
             </tr>

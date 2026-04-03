@@ -163,6 +163,19 @@
         }
         .btn-add:hover { background: #4338ca; }
 
+        /* ── 공지 관련 ── */
+        .notice-active   { background: #dcfce7; color: #15803d; }
+        .notice-inactive { background: #f1f5f9; color: #6b7280; }
+        .btn-up   { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .btn-down { background: #fefce8; color: #a16207; border: 1px solid #fde68a; }
+        .btn-up:hover   { background: #dcfce7; }
+        .btn-down:hover { background: #fef9c3; }
+        .notice-content-preview {
+            max-width: 300px; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+            color: #6b7280; font-size: 12px;
+        }
+
         /* ── 모달 ── */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
@@ -171,7 +184,7 @@
         }
         .modal-overlay.open { display: flex; }
         .modal-box {
-            background: white; border-radius: 16px; padding: 32px;
+            background: var(--surface); border-radius: 16px; padding: 32px;
             width: 380px; box-shadow: 0 8px 40px rgba(0,0,0,.18);
             animation: modalIn .18s ease;
         }
@@ -179,36 +192,90 @@
             from { opacity: 0; transform: scale(.95) translateY(-8px); }
             to   { opacity: 1; transform: scale(1) translateY(0); }
         }
-        .modal-title { font-size: 16px; font-weight: 700; color: #1e1b4b; margin-bottom: 20px; }
+        .modal-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
         .modal-field { margin-bottom: 14px; }
         .modal-field label {
-            font-size: 13px; color: #6b7280;
+            font-size: 13px; color: var(--text-label);
             display: block; margin-bottom: 6px; font-weight: 500;
         }
         .modal-field input {
             width: 100%; padding: 10px 14px;
-            border: 1px solid #e2e8f0; border-radius: 8px;
+            border: 1px solid var(--border); border-radius: 8px;
             font-size: 14px; font-family: inherit;
+            background: var(--input-bg); color: var(--text-body);
             transition: border .2s;
         }
         .modal-field input:focus {
-            outline: none; border-color: #4f46e5;
+            outline: none; border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+        }
+        /* 체크박스는 modal-field input 기본 스타일 무효화 */
+        .modal-field input[type="checkbox"] {
+            width: auto; padding: 0; border: none;
+            border-radius: 0; box-shadow: none; background: transparent;
+        }
+        .modal-field textarea {
+            background: var(--input-bg); color: var(--text-body);
+            border-color: var(--border);
         }
         .modal-actions {
             display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px;
         }
         .btn-modal-cancel {
-            padding: 9px 20px; border: 1px solid #e2e8f0;
-            border-radius: 8px; background: white; color: #374151;
+            padding: 9px 20px; border: 1px solid var(--border);
+            border-radius: 8px; background: var(--surface); color: var(--text-body);
             font-size: 14px; cursor: pointer; font-family: inherit;
         }
         .btn-modal-save {
-            padding: 9px 22px; background: #4f46e5; color: white;
+            padding: 9px 22px; background: var(--accent); color: white;
             border: none; border-radius: 8px; font-size: 14px;
             font-weight: 600; cursor: pointer; font-family: inherit;
         }
-        .btn-modal-save:hover { background: #4338ca; }
+        .btn-modal-save:hover { background: var(--accent-hover); }
+
+        /* ── 공지 게시판 태그 선택 영역 ── */
+        .notice-cat-wrap {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .notice-cat-wrap > span {
+            font-size: 13px; color: var(--text-label); font-weight: 500;
+        }
+        .notice-cat-tags {
+            display: flex; flex-wrap: wrap; gap: 6px;
+        }
+        /* 실제 체크박스는 숨기고 label을 태그처럼 표시 */
+        .notice-cat-tags input[type="checkbox"] {
+            display: none;
+        }
+        .notice-cat-tags .cat-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 12px; border-radius: 20px; font-size: 13px;
+            cursor: pointer; user-select: none; font-weight: 500;
+            border: 1.5px solid var(--border);
+            background: var(--surface-2); color: var(--text-body);
+            transition: background .15s, color .15s, border-color .15s;
+            white-space: nowrap;
+        }
+        .notice-cat-tags .cat-tag:hover {
+            border-color: var(--accent); color: var(--accent);
+        }
+        /* 체크 상태 → 태그 활성 스타일 */
+        .notice-cat-tags input[type="checkbox"]:checked + .cat-tag {
+            background: var(--accent); color: #fff;
+            border-color: var(--accent);
+        }
+        /* ALL 태그 전용 */
+        .notice-cat-tags .cat-tag-all {
+            font-weight: 700;
+        }
+        .notice-cat-tags input[type="checkbox"]:checked + .cat-tag-all {
+            background: var(--accent); color: #fff; border-color: var(--accent);
+        }
+        /* 수정 모달 내 체크박스 기본 스타일 초기화 (modal-field input 충돌 방지) */
+        .notice-cat-tags input[type="checkbox"] {
+            width: 0; height: 0; padding: 0; margin: 0;
+            border: none; border-radius: 0; box-shadow: none; background: transparent;
+        }
 
         @media (max-width: 768px) {
             .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -370,6 +437,136 @@
     </div>
 
     <!-- ════════════════════════════════════════
+         공지 관리
+    ════════════════════════════════════════ -->
+    <div class="section-title" id="notices">📢 공지 관리</div>
+    <div class="table-card">
+        <div class="table-header">
+            <h3>공지 목록</h3>
+            <span class="count-badge" th:text="${#lists.size(notices)} + '개'"></span>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th style="width:50px; text-align:center;">순서</th>
+                <th>제목</th>
+                <th style="width:220px;">내용 미리보기</th>
+                <th style="width:100px;">게시판</th>
+                <th style="width:80px; text-align:center;">노출</th>
+                <th style="width:110px;">작성일</th>
+                <th style="width:200px;">관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(notices)}">
+                <td colspan="7" style="text-align:center; padding:40px 0; color:#9ca3af; font-size:14px;">
+                    📭 등록된 공지가 없습니다.
+                </td>
+            </tr>
+            <tr th:each="notice : ${notices}">
+                <!-- 순서 -->
+                <td style="text-align:center; color:#9ca3af; font-size:13px;" th:text="${notice.sortOrder}"></td>
+                <!-- 제목 -->
+                <td style="font-weight:600;" th:text="${notice.title}"></td>
+                <!-- 내용 미리보기 -->
+                <td>
+                    <div class="notice-content-preview"
+                         th:text="${notice.content != null ? notice.content : '(내용 없음)'}"></div>
+                </td>
+                <!-- 게시판(카테고리) -->
+                <td style="font-size:13px; color:#6b7280;">
+                    <span th:if="${#sets.isEmpty(notice.categories)}" style="color:#4f46e5; font-weight:600;">전체</span>
+                    <span th:each="cat,iter : ${notice.categories}"
+                          th:text="${cat.name + (!iter.last ? ', ' : '')}"></span>
+                </td>
+                <!-- 노출 여부 -->
+                <td style="text-align:center;">
+                    <span th:class="${notice.active} ? 'badge notice-active' : 'badge notice-inactive'"
+                          th:text="${notice.active} ? '노출' : '숨김'"></span>
+                </td>
+                <!-- 작성일 -->
+                <td style="font-size:13px;" th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd')}"></td>
+                <!-- 관리 버튼 -->
+                <td>
+                    <div class="action-group">
+                        <!-- 위로 -->
+                        <form th:action="@{/admin/notices/{id}/move-up(id=${notice.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-up" title="위로">▲</button>
+                        </form>
+                        <!-- 아래로 -->
+                        <form th:action="@{/admin/notices/{id}/move-down(id=${notice.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-down" title="아래로">▼</button>
+                        </form>
+                        <!-- 수정 -->
+                        <button class="btn btn-edit"
+                                th:data-notice-id="${notice.id}"
+                                th:data-notice-title="${notice.title}"
+                                th:data-notice-content="${notice.content}"
+                                th:data-notice-active="${notice.active}"
+                                th:data-notice-category-ids="${notice.categories.![id].toString()}"
+                                onclick="openNoticeEditModal(this)">✏️ 수정</button>
+                        <!-- 삭제 -->
+                        <form th:action="@{/admin/notices/{id}/delete(id=${notice.id})}" method="post"
+                              onsubmit="return confirm('공지를 삭제하시겠습니까?')">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-delete">🗑 삭제</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- 공지 추가 폼 -->
+        <div class="add-category-bar" style="flex-direction:column; align-items:stretch; gap:10px;">
+            <form th:action="@{/admin/notices/add}" method="post"
+                  style="display:flex; flex-direction:column; gap:12px; width:100%;"
+                  onsubmit="clearChecksIfAll('add-all-check', 'add-cat-')">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <!-- 제목 + 추가 버튼 -->
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:200px;">
+                        <label>제목 <span style="color:#dc2626;">*</span></label>
+                        <input type="text" name="title" placeholder="공지 제목을 입력하세요"
+                               required maxlength="200" style="width:100%;">
+                    </div>
+                    <button type="submit" class="btn-add" style="align-self:flex-end;">📢 공지 추가</button>
+                </div>
+                <!-- 노출 게시판 태그 선택 -->
+                <div class="notice-cat-wrap">
+                    <span>노출 게시판</span>
+                    <div class="notice-cat-tags">
+                        <!-- ALL 태그 -->
+                        <input type="checkbox" id="add-all-check"
+                               onchange="toggleAllCategoryChecks('add-cat-', this)">
+                        <label for="add-all-check" class="cat-tag cat-tag-all">✔ 전체</label>
+                        <!-- 카테고리별 태그 -->
+                        <th:block th:each="cat : ${categories}">
+                            <input type="checkbox" name="categoryIds" th:value="${cat.id}"
+                                   th:id="'add-cat-' + ${cat.id}"
+                                   onchange="syncAllCheck('add-cat-', 'add-all-check', /*[[${#lists.size(categories)}]]*/ 0)">
+                            <label th:for="'add-cat-' + ${cat.id}" class="cat-tag"
+                                   th:text="${cat.name}"></label>
+                        </th:block>
+                    </div>
+                </div>
+                <!-- 내용 -->
+                <div>
+                    <label>내용</label>
+                    <textarea name="content" rows="3" placeholder="공지 내용을 입력하세요 (선택)"
+                              style="width:100%; padding:10px 12px; border:1px solid var(--border);
+                                     border-radius:8px; font-size:14px; font-family:inherit;
+                                     background:var(--input-bg); color:var(--text-body);
+                                     resize:vertical;"></textarea>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
          게시판 카테고리 관리
     ════════════════════════════════════════ -->
     <div class="section-title">📋 게시판 카테고리 관리</div>
@@ -497,6 +694,54 @@
 
 </div>
 
+<!-- ── 공지 수정 모달 ── -->
+<div id="notice-edit-modal" class="modal-overlay" onclick="handleNoticeModalOverlayClick(event)">
+    <div class="modal-box" style="width:480px;">
+        <p class="modal-title">📢 공지 수정</p>
+        <form id="notice-edit-form" method="post"
+              onsubmit="clearChecksIfAll('edit-all-check', 'edit-cat-')">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="modal-field">
+                <label>제목 <span style="color:#dc2626;">*</span></label>
+                <input type="text" id="notice-edit-title" name="title" required maxlength="200">
+            </div>
+            <div class="modal-field">
+                <label>내용</label>
+                <textarea id="notice-edit-content" name="content" rows="5"
+                          style="width:100%; padding:10px 14px; border:1px solid #e2e8f0;
+                                 border-radius:8px; font-size:14px; font-family:inherit;
+                                 resize:vertical; transition:border .2s;"></textarea>
+            </div>
+            <div class="modal-field">
+                <label>노출 게시판</label>
+                <div class="notice-cat-tags">
+                    <!-- ALL 태그 -->
+                    <input type="checkbox" id="edit-all-check"
+                           onchange="toggleAllCategoryChecks('edit-cat-', this)">
+                    <label for="edit-all-check" class="cat-tag cat-tag-all">✔ 전체</label>
+                    <!-- 카테고리별 태그 -->
+                    <th:block th:each="cat : ${categories}">
+                        <input type="checkbox" name="categoryIds" th:value="${cat.id}"
+                               th:id="'edit-cat-' + ${cat.id}"
+                               onchange="syncAllCheck('edit-cat-', 'edit-all-check', /*[[${#lists.size(categories)}]]*/ 0)">
+                        <label th:for="'edit-cat-' + ${cat.id}" class="cat-tag"
+                               th:text="${cat.name}"></label>
+                    </th:block>
+                </div>
+            </div>
+            <div class="modal-field" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="notice-edit-active" name="active" value="true"
+                       style="width:auto; accent-color:#4f46e5;">
+                <label for="notice-edit-active" style="margin:0; cursor:pointer;">게시판에 노출</label>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeNoticeEditModal()">취소</button>
+                <button type="submit" class="btn-modal-save">저장</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- ── 카테고리 수정 모달 ── -->
 <div id="edit-modal" class="modal-overlay" onclick="handleModalOverlayClick(event)">
     <div class="modal-box">
@@ -598,8 +843,82 @@
 
     /* ESC 키로 모달 닫기 */
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeEditModal();
+        if (e.key === 'Escape') {
+            closeEditModal();
+            closeNoticeEditModal();
+        }
     });
+
+    /* ── 공지 수정 모달 ── */
+    function openNoticeEditModal(btn) {
+        const id          = btn.dataset.noticeId;
+        const title       = btn.dataset.noticeTitle;
+        const content     = btn.dataset.noticeContent || '';
+        const active      = btn.dataset.noticeActive === 'true';
+        // data-notice-category-ids 는 "[1, 2]" 형태 문자열 — 숫자만 추출
+        const rawIds      = btn.dataset.noticeCategoryIds || '';
+        const selectedIds = rawIds.match(/\d+/g) ? rawIds.match(/\d+/g).map(Number) : [];
+
+        document.getElementById('notice-edit-title').value    = title;
+        document.getElementById('notice-edit-content').value  = content;
+        document.getElementById('notice-edit-active').checked = active;
+        document.getElementById('notice-edit-form').action    = '/admin/notices/' + id + '/update';
+
+        // 모든 카테고리 체크박스 초기화 후 기존 선택값 복원
+        document.querySelectorAll('[id^="edit-cat-"]').forEach(cb => {
+            cb.checked = selectedIds.includes(Number(cb.value));
+        });
+        // ALL 체크박스 상태 동기화 (선택된 카테고리가 없으면 ALL 체크)
+        const total = document.querySelectorAll('[id^="edit-cat-"]').length;
+        const editAllCheck = document.getElementById('edit-all-check');
+        editAllCheck.checked = selectedIds.length === 0 || selectedIds.length === total;
+
+        document.getElementById('notice-edit-modal').classList.add('open');
+        document.getElementById('notice-edit-title').focus();
+    }
+
+    function closeNoticeEditModal() {
+        document.getElementById('notice-edit-modal').classList.remove('open');
+    }
+
+    /**
+     * ALL 체크박스 클릭 시 해당 prefix 의 카테고리 체크박스 전체 체크/해제
+     * @param {string} prefix - 카테고리 체크박스 id prefix (예: 'edit-cat-')
+     * @param {HTMLInputElement} allChk - ALL 체크박스 엘리먼트
+     */
+    function toggleAllCategoryChecks(prefix, allChk) {
+        document.querySelectorAll('[id^="' + prefix + '"]').forEach(cb => {
+            cb.checked = allChk.checked;
+        });
+    }
+
+    /**
+     * 개별 카테고리 체크박스 변경 시 ALL 체크박스 상태 동기화
+     * 모두 선택이면 ALL 체크, 하나라도 해제이면 ALL 해제
+     * @param {string} prefix  - 카테고리 체크박스 id prefix
+     * @param {string} allId   - ALL 체크박스 id
+     * @param {number} total   - 전체 카테고리 수
+     */
+    function syncAllCheck(prefix, allId, total) {
+        const checked = document.querySelectorAll('[id^="' + prefix + '"]:checked').length;
+        document.getElementById(allId).checked = (checked === total);
+    }
+
+    /**
+     * ALL 체크 상태이면 categoryIds 체크박스를 모두 해제하고 폼 전송
+     * → 서버에 categoryIds 파라미터가 없으면 전체 게시판으로 처리됨
+     */
+    function clearChecksIfAll(allId, prefix) {
+        if (document.getElementById(allId).checked) {
+            document.querySelectorAll('[id^="' + prefix + '"]').forEach(cb => cb.checked = false);
+        }
+    }
+
+    function handleNoticeModalOverlayClick(e) {
+        if (e.target === document.getElementById('notice-edit-modal')) {
+            closeNoticeEditModal();
+        }
+    }
 
     function confirmDelete(form) {
         const name = form.dataset.catName;

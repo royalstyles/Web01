@@ -60,6 +60,7 @@ public class AdminController {
         model.addAttribute("lockedIds",       lockedIds);
         model.addAttribute("currentUsername", currentUser.getUsername());
         model.addAttribute("categories",       adminService.findAllCategories());
+        model.addAttribute("notices",          adminService.findAllNotices());
         model.addAttribute("importLastResult", importService.getLastRunResult());
         model.addAttribute("importLastRunAt",  importService.getLastRunAt());
 
@@ -137,6 +138,61 @@ public class AdminController {
         String result = importService.runImport(Math.min(pages, 5)); // 최대 5페이지 제한
         ra.addFlashAttribute("successMsg", "[퀘이사존 수집] " + result);
         return "redirect:/admin";
+    }
+
+    // ── 공지 추가 ──────────────────────────────────────────────
+    @PostMapping("/notices/add")
+    public String addNotice(@RequestParam String title,
+                            @RequestParam(required = false) String content,
+                            @RequestParam(required = false) List<Long> categoryIds,
+                            @AuthenticationPrincipal UserDetails currentUser,
+                            RedirectAttributes ra) {
+        try {
+            adminService.addNotice(title, content, categoryIds, currentUser.getUsername());
+            ra.addFlashAttribute("successMsg", "공지가 등록되었습니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin#notices";
+    }
+
+    // ── 공지 수정 ──────────────────────────────────────────────
+    @PostMapping("/notices/{id}/update")
+    public String updateNotice(@PathVariable Long id,
+                               @RequestParam String title,
+                               @RequestParam(required = false) String content,
+                               @RequestParam(defaultValue = "false") boolean active,
+                               @RequestParam(required = false) List<Long> categoryIds,
+                               RedirectAttributes ra) {
+        try {
+            adminService.updateNotice(id, title, content, active, categoryIds);
+            ra.addFlashAttribute("successMsg", "공지가 수정되었습니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin#notices";
+    }
+
+    // ── 공지 삭제 ──────────────────────────────────────────────
+    @PostMapping("/notices/{id}/delete")
+    public String deleteNotice(@PathVariable Long id, RedirectAttributes ra) {
+        adminService.deleteNotice(id);
+        ra.addFlashAttribute("successMsg", "공지가 삭제되었습니다.");
+        return "redirect:/admin#notices";
+    }
+
+    // ── 공지 순서 위로 ─────────────────────────────────────────
+    @PostMapping("/notices/{id}/move-up")
+    public String moveNoticeUp(@PathVariable Long id, RedirectAttributes ra) {
+        adminService.moveNoticeUp(id);
+        return "redirect:/admin#notices";
+    }
+
+    // ── 공지 순서 아래로 ───────────────────────────────────────
+    @PostMapping("/notices/{id}/move-down")
+    public String moveNoticeDown(@PathVariable Long id, RedirectAttributes ra) {
+        adminService.moveNoticeDown(id);
+        return "redirect:/admin#notices";
     }
 
     // ── 카테고리 추가 ──────────────────────────────────────────

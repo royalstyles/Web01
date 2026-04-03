@@ -1,15 +1,20 @@
 package com.jhpj.Web01.service;
 
 import com.jhpj.Web01.entity.Category;
+import com.jhpj.Web01.entity.Notice;
 import com.jhpj.Web01.entity.User;
 import com.jhpj.Web01.repository.CategoryRepository;
 import com.jhpj.Web01.repository.EmailVerificationTokenRepository;
+import com.jhpj.Web01.repository.NoticeRepository;
 import com.jhpj.Web01.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 관리자 기능 서비스
@@ -24,6 +29,7 @@ public class AdminService {
     private final EmailVerificationTokenRepository tokenRepository;
     private final LoginAttemptService loginAttemptService;
     private final CategoryRepository categoryRepository;
+    private final NoticeRepository noticeRepository;
 
     /** 권한 토글: ROLE_USER ↔ ROLE_ADMIN */
     @Transactional
@@ -109,8 +115,130 @@ public class AdminService {
         categoryRepository.deleteById(categoryId);
     }
 
+    // ── 공지 조회 ──────────────────────────────────────────────
+
+    /** 전체 공지 목록 — sortOrder 오름차순 (관리자 화면용, 숨김 포함) */
+    @Transactional(readOnly = true)
+    public List<Notice> findAllNotices() {
+        return noticeRepository.findAllByOrderBySortOrderAsc();
+    }
+
+    /**
+     * 활성 공지 목록 — 게시판 목록 상단 표시용
+     * @param categoryId null = 전체 게시판 보기 (categories 비어있는 공지만)
+     *                   값 있음 = categories 비어있는 공지 + 해당 카테고리 포함 공지
+     */
+    @Transactional(readOnly = true)
+    public List<Notice> findActiveNotices(Long categoryId) {
+        return categoryId == null
+                ? noticeRepository.findByActiveTrueAndCategoriesEmpty()
+                : noticeRepository.findActiveByCategoryId(categoryId);
+    }
+
+    // ── 공지 추가 ──────────────────────────────────────────────
+
+    /**
+     * 공지 추가 — 기존 최대 sortOrder + 1 로 맨 아래에 삽입
+     * @param categoryIds 비어있거나 null = 전체 게시판 / 값 있음 = 선택된 카테고리에서만 표시
+     */
+    @Transactional
+    public void addNotice(String title, String content, List<Long> categoryIds, String authorUsername) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("공지 제목을 입력해주세요.");
+        }
+        User author = findUser(authorUsername);
+        Set<Category> categories = resolveCategories(categoryIds);
+
+        int nextOrder = noticeRepository.findTopByOrderBySortOrderDesc()
+                .map(n -> n.getSortOrder() + 1)
+                .orElse(1);
+
+        noticeRepository.save(Notice.builder()
+                .author(author)
+                .title(title.trim())
+                .content(content)
+                .categories(categories)
+                .sortOrder(nextOrder)
+                .build());
+    }
+
+    // ── 공지 수정 ──────────────────────────────────────────────
+
+    @Transactional
+    public void updateNotice(Long id, String title, String content, boolean active, List<Long> categoryIds) {
+        Notice notice = findNotice(id);
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("공지 제목을 입력해주세요.");
+        }
+        notice.setTitle(title.trim());
+        notice.setContent(content);
+        notice.setActive(active);
+        // 기존 카테고리 교체 (clear 후 addAll — orphan 관리 불필요, 조인 테이블만 변경)
+        notice.getCategories().clear();
+        notice.getCategories().addAll(resolveCategories(categoryIds));
+        noticeRepository.save(notice);
+    }
+
+    // ── 공지 삭제 ──────────────────────────────────────────────
+
+    @Transactional
+    public void deleteNotice(Long id) {
+        noticeRepository.deleteById(id);
+    }
+
+    // ── 공지 순서 변경 ─────────────────────────────────────────
+
+    /**
+     * 공지를 한 단계 위로 이동 — 바로 위 공지와 sortOrder 를 교환
+     */
+    @Transactional
+    public void moveNoticeUp(Long id) {
+        Notice current = findNotice(id);
+        noticeRepository
+                .findTopBySortOrderLessThanOrderBySortOrderDesc(current.getSortOrder())
+                .ifPresent(prev -> swapSortOrder(current, prev));
+    }
+
+    /**
+     * 공지를 한 단계 아래로 이동 — 바로 아래 공지와 sortOrder 를 교환
+     */
+    @Transactional
+    public void moveNoticeDown(Long id) {
+        Notice current = findNotice(id);
+        noticeRepository
+                .findTopBySortOrderGreaterThanOrderBySortOrderAsc(current.getSortOrder())
+                .ifPresent(next -> swapSortOrder(current, next));
+    }
+
+    private void swapSortOrder(Notice a, Notice b) {
+        int tmp = a.getSortOrder();
+        a.setSortOrder(b.getSortOrder());
+        b.setSortOrder(tmp);
+        noticeRepository.save(a);
+        noticeRepository.save(b);
+    }
+
+    private Notice findNotice(Long id) {
+        return noticeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("공지를 찾을 수 없습니다."));
+    }
+
+    /** categoryIds → Category Set 변환 (null 또는 빈 리스트면 빈 Set 반환 = 전체 게시판) */
+    private Set<Category> resolveCategories(List<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) return new HashSet<>();
+        return categoryIds.stream()
+                .map(cid -> categoryRepository.findById(cid)
+                        .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다: " + cid)))
+                .collect(Collectors.toSet());
+    }
+
     private User findUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+    }
+
+    private User findUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + username));
     }
 }
