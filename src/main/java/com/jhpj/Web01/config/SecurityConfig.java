@@ -9,7 +9,11 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.authentication.DisabledException;
+
+import javax.sql.DataSource;
 
 /**
  * Spring Security 보안 설정 클래스
@@ -24,6 +28,19 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final LoginAttemptService loginAttemptService;
+    private final DataSource dataSource;
+
+    /**
+     * 자동 로그인(Remember Me) 토큰을 DB에 영속 저장하는 리포지토리 빈
+     * - PERSISTENT_LOGINS 테이블 사용 (V12 마이그레이션으로 생성)
+     * - 토큰 탈취 감지: 동일 series에 다른 토큰 감지 시 전체 세션 무효화
+     */
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository() {
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+        return repo;
+    }
 
     /**
      * AuthenticationManager 빈 직접 노출 — 컨트롤러/서비스에서 직접 인증이 필요할 때 주입
@@ -90,11 +107,22 @@ public class SecurityConfig {
                         })
                         .permitAll()
                 )
+                .rememberMe(rememberMe -> rememberMe
+                        // DB 기반 영속 토큰 방식 (쿠키 탈취 감지 가능)
+                        .tokenRepository(persistentTokenRepository())
+                        // 30일간 자동 로그인 유지
+                        .tokenValiditySeconds(30 * 24 * 60 * 60)
+                        .userDetailsService(userDetailsService)
+                        // 로그인 폼의 체크박스 name 속성과 일치해야 함
+                        .rememberMeParameter("remember-me")
+                        .rememberMeCookieName("remember-me")
+                )
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
                         .logoutSuccessUrl("/home")          // ← 로그아웃 후 홈으로
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        // 자동 로그인 쿠키도 함께 삭제
+                        .deleteCookies("JSESSIONID", "remember-me")
                         .permitAll()
                 )
                 .userDetailsService(userDetailsService);

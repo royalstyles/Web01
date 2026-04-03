@@ -52,12 +52,18 @@
         <div class="form-group">
             <label>비밀번호</label>
             <input type="password" name="password" placeholder="비밀번호를 입력하세요" required
-                   onkeydown="if(event.key==='Enter') this.form.submit();">
-            <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                <input type="checkbox" id="rememberMe" style="width:auto; accent-color:#4f46e5; cursor:pointer;">
-                <label for="rememberMe" style="margin:0; font-size:14px; color:#555; cursor:pointer;">
-                    아이디 기억하기
-                </label>
+                   onkeydown="if(event.key==='Enter') this.form.requestSubmit();">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="rememberMe" style="width:auto; accent-color:#4f46e5; cursor:pointer;">
+                    <label for="rememberMe" style="margin:0; font-size:13px; color:#555; cursor:pointer;">아이디 기억하기</label>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="autoLogin" name="remember-me" style="width:auto; accent-color:#4f46e5; cursor:pointer;">
+                    <label for="autoLogin" style="margin:0; font-size:13px; color:#555; cursor:pointer;">
+                        자동 로그인 <span style="color:#9ca3af; font-size:11px;">(30일)</span>
+                    </label>
+                </div>
             </div>
         </div>
         <button class="btn" type="submit">로그인</button>
