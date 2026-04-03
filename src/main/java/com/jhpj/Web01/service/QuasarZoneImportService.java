@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.jsoup.HttpStatusException;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -211,6 +213,14 @@ public class QuasarZoneImportService {
             log.info("[퀘이사존] 수집: {}", title);
             return true;
 
+        } catch (HttpStatusException e) {
+            // 비밀글(403)은 예상된 케이스이므로 DEBUG 레벨로만 기록
+            if (e.getStatusCode() == 403) {
+                log.debug("[퀘이사존] 비밀글 — 건너뜀: {}", url);
+            } else {
+                log.warn("[퀘이사존] 게시글 수집 실패 (HTTP {}): {} — {}", e.getStatusCode(), url, e.getMessage());
+            }
+            return false;
         } catch (IOException e) {
             log.warn("[퀘이사존] 게시글 수집 실패: {} — {}", url, e.getMessage());
             return false;
@@ -235,12 +245,21 @@ public class QuasarZoneImportService {
                         .header("Cache-Control",             "max-age=0")
                         .timeout(TIMEOUT_MS)
                         .get();
-            } catch (IOException e) {
+            } catch (HttpStatusException e) {
+                // 403(비밀글/접근 불가)은 재시도해도 소용 없으므로 즉시 상위로 던짐
+                if (e.getStatusCode() == 403) throw e;
                 lastException = e;
                 log.warn("[퀘이사존] 요청 실패 (시도 {}/{}): {} — {}",
                         attempt, MAX_RETRIES, url, e.getMessage());
                 if (attempt < MAX_RETRIES) {
                     // 지수 백오프: 3초 → 6초 → 9초
+                    delay((long) attempt * 3_000);
+                }
+            } catch (IOException e) {
+                lastException = e;
+                log.warn("[퀘이사존] 요청 실패 (시도 {}/{}): {} — {}",
+                        attempt, MAX_RETRIES, url, e.getMessage());
+                if (attempt < MAX_RETRIES) {
                     delay((long) attempt * 3_000);
                 }
             }
