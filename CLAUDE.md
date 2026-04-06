@@ -62,6 +62,17 @@
 
 ---
 
+## 프론트엔드 / Thymeleaf 패턴
+
+- 공통 헤더: `fragments/header :: headerStyles` (viewport, theme.js, theme.css 포함)
+- 로그인·회원가입은 header fragment 미사용 → `<meta name="viewport">` 직접 삽입 필수
+- 모바일 반응형 기준점: `640px` (헤더), `768px` (콘텐츠 레이아웃)
+- 모바일 전용 요소는 CSS `display:none` + media query `display:flex/block` 패턴 사용
+- 테이블이 모바일에서 잘릴 경우 → 별도 `.mobile-cards` 블록을 추가하고 미디어쿼리로 테이블/카드 전환
+- 다크모드: `[data-theme="dark"]` 셀렉터로 오버라이드, CSS 변수(`--surface`, `--text`, `--accent` 등) 활용
+
+---
+
 ## 자주 쓰는 커맨드 참고
 
 ### NAS Docker Compose 재배포
