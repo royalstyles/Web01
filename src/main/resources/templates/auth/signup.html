@@ -3,6 +3,7 @@
 <head>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입</title>
     <!-- FOUC 방지: CSS 적용 전 data-theme 복원 -->
     <script th:src="@{/js/theme.js}"></script>
@@ -18,9 +19,13 @@
         /* login.html 스타일 동일 적용 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5;
-            display: flex; justify-content: center; align-items: center; height: 100vh; }
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            padding: 16px; }
         .card { background: white; padding: 40px; border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,.1); width: 360px; }
+            box-shadow: 0 4px 20px rgba(0,0,0,.1); width: 100%; max-width: 360px; }
+        @media (max-width: 480px) {
+            .card { padding: 28px 20px; }
+        }
         h2 { text-align: center; margin-bottom: 24px; color: #333; }
         .form-group { margin-bottom: 16px; }
         label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; }
