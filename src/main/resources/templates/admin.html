@@ -277,9 +277,45 @@
             border: none; border-radius: 0; box-shadow: none; background: transparent;
         }
 
+        /* ── 모바일 카드 레이아웃 ── */
+        .mobile-cards { display: none; }
+        .mobile-card {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .mobile-card:last-child { border-bottom: none; }
+        .mc-top {
+            display: flex; align-items: flex-start;
+            gap: 10px; margin-bottom: 8px;
+        }
+        .mc-info { flex: 1; min-width: 0; }
+        .mc-name {
+            font-size: 14px; font-weight: 600; color: #1e1b4b;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .mc-sub {
+            font-size: 12px; color: #9ca3af; margin-top: 3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .mc-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; align-items: center; }
+        .mc-date { font-size: 11px; color: #9ca3af; }
+        .mc-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
         @media (max-width: 768px) {
-            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .wrapper { padding: 20px 12px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 14px 16px; gap: 10px; }
+            .stat-value { font-size: 22px; }
+
+            /* 데스크톱 테이블 숨기고 카드 표시 */
+            .table-card table { display: none; }
+            .mobile-cards { display: block; }
+
             .action-group { flex-direction: column; }
+
+            /* 카테고리 추가 폼 세로 정렬 */
+            .add-category-bar { flex-direction: column; align-items: stretch; }
+            .add-category-bar .btn-add { width: 100%; }
         }
     </style>
 </head>
@@ -434,6 +470,68 @@
             </tr>
             </tbody>
         </table>
+
+        <!-- 모바일 카드 목록 (768px 이하에서 표시) -->
+        <div class="mobile-cards">
+            <div th:if="${#lists.isEmpty(users)}"
+                 style="text-align:center; padding:32px 0; color:#9ca3af; font-size:14px;">
+                등록된 회원이 없습니다.
+            </div>
+            <div class="mobile-card" th:each="user : ${users}">
+                <!-- 아바타 + 아이디/이메일 + 권한 배지 -->
+                <div class="mc-top">
+                    <div class="avatar"
+                         th:text="${#strings.substring(user.username,0,1).toUpperCase()}">A</div>
+                    <div class="mc-info">
+                        <div class="mc-name" th:text="${user.username}"></div>
+                        <div class="mc-sub" th:text="${user.email}"></div>
+                    </div>
+                    <span th:class="${user.role.name() == 'ROLE_ADMIN'} ? 'badge badge-admin' : 'badge badge-user'"
+                          th:text="${user.role.name() == 'ROLE_ADMIN'} ? '👑 관리자' : '👤 일반'"></span>
+                </div>
+                <!-- 인증/잠금 상태 + 가입일 -->
+                <div class="mc-badges">
+                    <span th:if="${user.emailVerified}" class="badge badge-verified">✅ 인증됨</span>
+                    <span th:unless="${user.emailVerified}" class="badge badge-unverified">❌ 미인증</span>
+                    <span th:if="${lockedIds.contains(user.id)}" class="badge badge-locked">🔒 잠금</span>
+                    <span class="mc-date"
+                          th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}"></span>
+                </div>
+                <!-- 액션 버튼 -->
+                <div class="mc-actions">
+                    <th:block th:if="${user.username == currentUsername}">
+                        <button class="btn btn-role btn-self" disabled>권한 변경</button>
+                    </th:block>
+                    <th:block th:unless="${user.username == currentUsername}">
+                        <form th:action="@{/admin/users/{id}/role(id=${user.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-role"
+                                    th:text="${user.role.name() == 'ROLE_ADMIN'} ? '→ 일반' : '→ 관리자'"></button>
+                        </form>
+                    </th:block>
+                    <form th:if="${lockedIds.contains(user.id)}"
+                          th:action="@{/admin/users/{id}/unlock(id=${user.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-unlock">🔓 잠금 해제</button>
+                    </form>
+                    <form th:unless="${user.emailVerified}"
+                          th:action="@{/admin/users/{id}/verify(id=${user.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-verify">✉️ 인증 처리</button>
+                    </form>
+                    <th:block th:if="${user.username == currentUsername}">
+                        <button class="btn btn-delete btn-self" disabled>삭제</button>
+                    </th:block>
+                    <th:block th:unless="${user.username == currentUsername}">
+                        <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post"
+                              onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-delete">🗑 삭제</button>
+                        </form>
+                    </th:block>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ════════════════════════════════════════
@@ -446,7 +544,7 @@
             <span class="count-badge" th:text="${#lists.size(notices)} + '개'"></span>
         </div>
 
-        <table>
+        <table class="notice-table">
             <thead>
             <tr>
                 <th style="width:50px; text-align:center;">순서</th>
@@ -468,7 +566,7 @@
                 <!-- 순서 -->
                 <td style="text-align:center; color:#9ca3af; font-size:13px;" th:text="${notice.sortOrder}"></td>
                 <!-- 제목 -->
-                <td style="font-weight:600;" th:text="${notice.title}"></td>
+                <td class="col-title" style="font-weight:600;" th:text="${notice.title}"></td>
                 <!-- 내용 미리보기 -->
                 <td>
                     <div class="notice-content-preview"
@@ -519,6 +617,54 @@
             </tr>
             </tbody>
         </table>
+
+        <!-- 모바일 카드 목록 (768px 이하에서 표시) -->
+        <div class="mobile-cards">
+            <div th:if="${#lists.isEmpty(notices)}"
+                 style="text-align:center; padding:32px 0; color:#9ca3af; font-size:14px;">
+                📭 등록된 공지가 없습니다.
+            </div>
+            <div class="mobile-card" th:each="notice : ${notices}">
+                <!-- 제목 + 노출 상태 -->
+                <div class="mc-top">
+                    <div class="mc-info">
+                        <div class="mc-name" th:text="${notice.title}"></div>
+                        <div class="mc-sub">
+                            <span th:if="${#sets.isEmpty(notice.categories)}"
+                                  style="color:#4f46e5; font-weight:600;">전체 게시판</span>
+                            <span th:each="cat,iter : ${notice.categories}"
+                                  th:text="${cat.name + (!iter.last ? ', ' : '')}"></span>
+                            · <span th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd')}"></span>
+                        </div>
+                    </div>
+                    <span th:class="${notice.active} ? 'badge notice-active' : 'badge notice-inactive'"
+                          th:text="${notice.active} ? '노출' : '숨김'"></span>
+                </div>
+                <!-- 액션 버튼 -->
+                <div class="mc-actions">
+                    <form th:action="@{/admin/notices/{id}/move-up(id=${notice.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-up" title="위로">▲</button>
+                    </form>
+                    <form th:action="@{/admin/notices/{id}/move-down(id=${notice.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-down" title="아래로">▼</button>
+                    </form>
+                    <button class="btn btn-edit"
+                            th:data-notice-id="${notice.id}"
+                            th:data-notice-title="${notice.title}"
+                            th:data-notice-content="${notice.content}"
+                            th:data-notice-active="${notice.active}"
+                            th:data-notice-category-ids="${notice.categories.![id].toString()}"
+                            onclick="openNoticeEditModal(this)">✏️ 수정</button>
+                    <form th:action="@{/admin/notices/{id}/delete(id=${notice.id})}" method="post"
+                          onsubmit="return confirm('공지를 삭제하시겠습니까?')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-delete">🗑 삭제</button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <!-- 공지 추가 폼 -->
         <div class="add-category-bar" style="flex-direction:column; align-items:stretch; gap:10px;">
