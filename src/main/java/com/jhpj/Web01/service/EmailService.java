@@ -30,6 +30,13 @@ public class EmailService {
                 buildVerificationHtml(verifyUrl));
     }
 
+    /** 관리자 비밀번호 초기화 — 임시 비밀번호를 회원 이메일로 발송 */
+    public void sendPasswordResetEmail(String toEmail, String username, String tempPassword) {
+        sendMail(toEmail,
+                "[Web01] 임시 비밀번호가 발급되었습니다",
+                buildPasswordResetHtml(username, tempPassword));
+    }
+
     /** 이메일 변경 인증 */
     public void sendEmailChangeVerification(String toEmail, String username, String verifyUrl) {
         sendMail(toEmail,
@@ -53,6 +60,31 @@ public class EmailService {
     }
 
     // ── HTML 템플릿 ────────────────────────────────────────
+    private String buildPasswordResetHtml(String username, String tempPassword) {
+        return """
+            <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;
+                        padding:40px;background:#f0f2f5;border-radius:12px;">
+              <h2 style="color:#dc2626;text-align:center;">🔑 임시 비밀번호 발급</h2>
+              <p style="color:#555;text-align:center;margin:20px 0;">
+                <strong>%s</strong>님의 비밀번호가 관리자에 의해 초기화되었습니다.
+              </p>
+              <div style="background:white;border-radius:8px;padding:20px;text-align:center;
+                          border:2px dashed #dc2626;margin:20px 0;">
+                <p style="color:#6b7280;font-size:13px;margin:0 0 8px;">임시 비밀번호</p>
+                <p style="font-size:24px;font-weight:700;color:#1e1b4b;letter-spacing:4px;margin:0;">
+                  %s
+                </p>
+              </div>
+              <p style="color:#dc2626;text-align:center;font-size:14px;font-weight:600;">
+                ⚠️ 로그인 후 반드시 비밀번호를 변경해주세요.
+              </p>
+              <p style="color:#999;text-align:center;font-size:12px;margin-top:16px;">
+                본인이 요청하지 않은 경우 즉시 관리자에게 문의하세요.
+              </p>
+            </div>
+            """.formatted(username, tempPassword);
+    }
+
     private String buildVerificationHtml(String verifyUrl) {
         return """
             <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;

@@ -6,9 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.authentication.DisabledException;
@@ -23,6 +25,7 @@ import javax.sql.DataSource;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity  // @PreAuthorize / @PostAuthorize 사용 가능
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -59,10 +62,35 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // 1. 인증 필요 경로 먼저 (구체적인 것 우선)
-                        // 관리자 전용
+                        // ── 1. 관리자 전용 경로 (구체적인 것 먼저) ─────────────────
+                        // 회원 관리, 커스텀 역할 관리, 외부 수집은 관리자만
+                        .requestMatchers("/admin/users/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/roles/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/import/**").hasRole("ADMIN")
+
+                        // 공지 관리 — 관리자 또는 공지 작성/삭제 권한 보유자
+                        .requestMatchers("/admin/notices/**").access(
+                                new WebExpressionAuthorizationManager(
+                                        "hasRole('ADMIN') or hasAuthority('PERM_NOTICE_WRITE') or hasAuthority('PERM_NOTICE_DELETE')"
+                                )
+                        )
+                        // 카테고리 관리 — 관리자 또는 카테고리 관리 권한 보유자
+                        .requestMatchers("/admin/categories/**").access(
+                                new WebExpressionAuthorizationManager(
+                                        "hasRole('ADMIN') or hasAuthority('PERM_CATEGORY_MANAGE')"
+                                )
+                        )
+                        // 관리자 대시보드 — 관리자 또는 특정 관리 권한 보유자
+                        .requestMatchers("/admin", "/admin/").access(
+                                new WebExpressionAuthorizationManager(
+                                        "hasRole('ADMIN') or hasAuthority('PERM_NOTICE_WRITE') or " +
+                                        "hasAuthority('PERM_NOTICE_DELETE') or hasAuthority('PERM_CATEGORY_MANAGE')"
+                                )
+                        )
+                        // 나머지 /admin/** 은 관리자만
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        // 게시글 작성/수정/삭제/댓글/좋아요/파일업로드 — 로그인 필수
+
+                        // ── 2. 로그인 필수 경로 ─────────────────────────────────────
                         .requestMatchers(
                                 "/board/write", "/board/*/edit", "/board/*/delete",
                                 "/board/*/comments", "/board/comments/**",
@@ -70,8 +98,7 @@ public class SecurityConfig {
                                 "/profile/**", "/my-posts/**"
                         ).authenticated()
 
-                        // 2. 공개 허용
-                        // 비인증 허용 (홈, 게시글 목록/상세 공개)
+                        // ── 3. 공개 허용 ─────────────────────────────────────────────
                         .requestMatchers(
                                 "/auth/**", "/css/**", "/js/**", "/uploads/**",
                                 "/", "/home", "/board/**"

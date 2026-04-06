@@ -2,6 +2,7 @@ package com.jhpj.Web01.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,6 +56,14 @@ public class Post {
     @Column(nullable = false)
     @Builder.Default
     private int likeCount = 0;
+
+    /**
+     * 댓글 수 — COMMENTS 테이블 서브쿼리로 실시간 집계 (@Formula)
+     * DB 스키마 변경 없이 SELECT 시 인라인 서브쿼리로 계산되므로 N+1 없음
+     * Hibernate 가 자동으로 쿼리에 포함시키며 @Transient 와 달리 DB 에서 읽어옴
+     */
+    @Formula("(SELECT COUNT(*) FROM COMMENTS c WHERE c.post_id = id)")
+    private int commentCount;
 
     /** 최초 작성 일시 — 수정 불가 */
     @Column(nullable = false, updatable = false)

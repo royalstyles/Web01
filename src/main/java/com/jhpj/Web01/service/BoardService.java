@@ -155,7 +155,8 @@ public class BoardService {
     @Transactional
     public void deletePost(Long postId, String username) {
         Post post = getPostReadOnly(postId);
-        checkAuthor(post, username);
+        // 삭제 시에는 POST_DELETE_OTHERS 커스텀 권한도 허용
+        checkDeletePermission(post, username);
 
         // 첨부파일 디스크 삭제 (DB는 CASCADE)
         post.getFiles().forEach(f -> fileService.delete(f.getStoredName()));
@@ -230,9 +231,11 @@ public class BoardService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-        // 본인 또는 관리자만 삭제 가능
-        boolean isAdmin = findUser(username).getRole() == User.Role.ROLE_ADMIN;
-        if (!comment.getAuthor().getUsername().equals(username) && !isAdmin) {
+        // 본인, 관리자, 또는 COMMENT_DELETE_OTHERS 권한 보유자만 삭제 가능
+        User user = findUser(username);
+        boolean isAdmin = user.getRole() == User.Role.ROLE_ADMIN;
+        boolean hasPermission = user.hasPermission(Permission.COMMENT_DELETE_OTHERS);
+        if (!comment.getAuthor().getUsername().equals(username) && !isAdmin && !hasPermission) {
             throw new IllegalStateException("삭제 권한이 없습니다.");
         }
         commentRepository.delete(comment);
@@ -299,10 +302,26 @@ public class BoardService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }
 
+    /**
+     * 게시글 수정 권한 확인 — 본인 또는 관리자만 수정 가능
+     */
     private void checkAuthor(Post post, String username) {
-        boolean isAdmin = findUser(username).getRole() == User.Role.ROLE_ADMIN;
+        User user = findUser(username);
+        boolean isAdmin = user.getRole() == User.Role.ROLE_ADMIN;
         if (!post.getAuthor().getUsername().equals(username) && !isAdmin) {
-            throw new IllegalStateException("수정/삭제 권한이 없습니다.");
+            throw new IllegalStateException("수정 권한이 없습니다.");
+        }
+    }
+
+    /**
+     * 게시글 삭제 권한 확인 — 본인, 관리자, 또는 POST_DELETE_OTHERS 권한 보유자
+     */
+    private void checkDeletePermission(Post post, String username) {
+        User user = findUser(username);
+        boolean isAdmin = user.getRole() == User.Role.ROLE_ADMIN;
+        boolean hasPermission = user.hasPermission(Permission.POST_DELETE_OTHERS);
+        if (!post.getAuthor().getUsername().equals(username) && !isAdmin && !hasPermission) {
+            throw new IllegalStateException("삭제 권한이 없습니다.");
         }
     }
 

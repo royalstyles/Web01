@@ -104,6 +104,11 @@
 
         .post-title a { color: #1e1b4b; text-decoration: none; font-weight: 500; }
         .post-title a:hover { color: #4f46e5; text-decoration: underline; }
+        .comment-count {
+            display: inline-block;
+            color: #4f46e5; font-size: 12px; font-weight: 700;
+            margin-left: 4px; vertical-align: middle;
+        }
 
         /* 썸네일 */
         .post-title-wrap { display: flex; align-items: center; gap: 10px; }
@@ -351,6 +356,10 @@
                             <!-- 안읽음 점 표시 — JS 에서 읽은 게시글이면 숨김 처리 -->
                             <span class="unread-dot"></span>
                             <a th:href="@{/board/{id}(id=${post.id})}" th:text="${post.title}"></a>
+                            <!-- 댓글 수 — 1개 이상일 때만 표시 -->
+                            <span th:if="${post.commentCount > 0}"
+                                  class="comment-count"
+                                  th:text="'[' + ${post.commentCount} + ']'"></span>
                             <div class="meta">
                                 <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
                             </div>

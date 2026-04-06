@@ -1,15 +1,21 @@
 package com.jhpj.Web01.service;
 
 import com.jhpj.Web01.entity.Category;
+import com.jhpj.Web01.entity.CustomRole;
 import com.jhpj.Web01.entity.Notice;
+import com.jhpj.Web01.entity.Permission;
 import com.jhpj.Web01.entity.User;
 import com.jhpj.Web01.repository.CategoryRepository;
+import com.jhpj.Web01.repository.CustomRoleRepository;
 import com.jhpj.Web01.repository.EmailVerificationTokenRepository;
 import com.jhpj.Web01.repository.NoticeRepository;
 import com.jhpj.Web01.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
 
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +36,14 @@ public class AdminService {
     private final LoginAttemptService loginAttemptService;
     private final CategoryRepository categoryRepository;
     private final NoticeRepository noticeRepository;
+    private final CustomRoleRepository customRoleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
+    /** 임시 비밀번호 생성에 사용할 문자 집합 — 혼동 가능한 문자(0/O, 1/l/I) 제외 */
+    private static final String TEMP_PW_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    private static final int TEMP_PW_LENGTH   = 12;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     /** 권한 토글: ROLE_USER ↔ ROLE_ADMIN */
     @Transactional
@@ -55,6 +69,37 @@ public class AdminService {
     public void unlockUser(Long userId) {
         User user = findUser(userId);
         loginAttemptService.loginSucceeded(user.getUsername());
+    }
+
+    /**
+     * 회원 비밀번호 초기화
+     * 무작위 임시 비밀번호를 생성해 DB에 저장하고 회원 이메일로 발송
+     * @return 발송된 이메일 주소 (성공 메시지 표시용)
+     */
+    @Transactional
+    public String resetPassword(Long userId) {
+        User user = findUser(userId);
+
+        // 임시 비밀번호 생성 (SecureRandom 기반, 혼동 문자 제외)
+        String tempPassword = generateTempPassword();
+
+        // BCrypt 해시 후 저장
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        userRepository.save(user);
+
+        // 회원 이메일로 임시 비밀번호 발송
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), tempPassword);
+
+        return user.getEmail();
+    }
+
+    /** 지정 길이의 임시 비밀번호 생성 — SecureRandom 사용으로 예측 불가 */
+    private String generateTempPassword() {
+        StringBuilder sb = new StringBuilder(TEMP_PW_LENGTH);
+        for (int i = 0; i < TEMP_PW_LENGTH; i++) {
+            sb.append(TEMP_PW_CHARS.charAt(SECURE_RANDOM.nextInt(TEMP_PW_CHARS.length())));
+        }
+        return sb.toString();
     }
 
     /** 이메일 인증 강제 완료 */
@@ -240,5 +285,105 @@ public class AdminService {
     private User findUser(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + username));
+    }
+
+    // ── 커스텀 역할 조회 ───────────────────────────────────────
+
+    /** 전체 커스텀 역할 목록 — 생성일 오름차순 */
+    @Transactional(readOnly = true)
+    public List<CustomRole> findAllCustomRoles() {
+        return customRoleRepository.findAllByOrderByCreatedAtAsc();
+    }
+
+    // ── 커스텀 역할 추가 ───────────────────────────────────────
+
+    /**
+     * 새 커스텀 역할 생성
+     * @param name        역할명 (고유, 공백 불가)
+     * @param description 역할 설명 (선택)
+     * @param permissions 부여할 세부 기능 권한 목록
+     */
+    @Transactional
+    public void addCustomRole(String name, String description, Set<Permission> permissions) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("역할명을 입력해주세요.");
+        }
+        if (customRoleRepository.existsByName(name.trim())) {
+            throw new IllegalArgumentException("이미 존재하는 역할명입니다: " + name);
+        }
+        customRoleRepository.save(CustomRole.builder()
+                .name(name.trim())
+                .description(description != null ? description.trim() : null)
+                .permissions(permissions != null ? permissions : new HashSet<>())
+                .build());
+    }
+
+    // ── 커스텀 역할 권한 수정 ─────────────────────────────────
+
+    /**
+     * 기존 커스텀 역할의 세부 기능 권한 목록 교체
+     * 역할명/설명도 함께 수정 가능
+     */
+    @Transactional
+    public void updateCustomRole(Long roleId, String name, String description, Set<Permission> permissions) {
+        CustomRole role = customRoleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("역할을 찾을 수 없습니다."));
+
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("역할명을 입력해주세요.");
+        }
+        // 이름 중복 체크 (자기 자신 제외)
+        customRoleRepository.findByName(name.trim())
+                .filter(r -> !r.getId().equals(roleId))
+                .ifPresent(r -> { throw new IllegalArgumentException("이미 존재하는 역할명입니다: " + name); });
+
+        role.setName(name.trim());
+        role.setDescription(description != null ? description.trim() : null);
+        // 기존 권한 교체
+        role.getPermissions().clear();
+        if (permissions != null) {
+            role.getPermissions().addAll(permissions);
+        }
+        customRoleRepository.save(role);
+    }
+
+    // ── 커스텀 역할 삭제 ───────────────────────────────────────
+
+    /**
+     * 커스텀 역할 삭제
+     * 해당 역할이 할당된 회원의 customRole 은 ON DELETE SET NULL 로 자동 null 처리됨
+     */
+    @Transactional
+    public void deleteCustomRole(Long roleId) {
+        if (!customRoleRepository.existsById(roleId)) {
+            throw new IllegalArgumentException("역할을 찾을 수 없습니다.");
+        }
+        customRoleRepository.deleteById(roleId);
+    }
+
+    // ── 회원에게 커스텀 역할 할당/해제 (다대다) ──────────────────
+
+    /**
+     * 특정 회원의 커스텀 역할 목록을 교체 (기존 역할 전체 제거 후 새 역할 목록으로 설정)
+     * @param userId  대상 회원 ID
+     * @param roleIds 할당할 커스텀 역할 ID 집합 (빈 Set 이면 전체 해제)
+     */
+    @Transactional
+    public void assignCustomRoles(Long userId, Set<Long> roleIds) {
+        User user = findUser(userId);
+
+        // 기존 역할 전체 제거
+        user.getCustomRoles().clear();
+
+        // 새 역할 목록 설정
+        if (roleIds != null && !roleIds.isEmpty()) {
+            Set<CustomRole> newRoles = roleIds.stream()
+                    .map(id -> customRoleRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("역할을 찾을 수 없습니다: " + id)))
+                    .collect(Collectors.toSet());
+            user.getCustomRoles().addAll(newRoles);
+        }
+
+        userRepository.save(user);
     }
 }

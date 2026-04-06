@@ -1,0 +1,21 @@
+-- ─────────────────────────────────────────────────────────────────
+-- V18: 사용자-커스텀역할 관계를 1:1 → 다대다(N:M)로 전환
+-- 기존 USERS.CUSTOM_ROLE_ID 컬럼 제거 후 조인 테이블 생성
+-- ─────────────────────────────────────────────────────────────────
+
+-- 기존 단일 FK 제약 및 컬럼 제거
+ALTER TABLE USERS DROP CONSTRAINT FK_USERS_CUSTOM_ROLE;
+ALTER TABLE USERS DROP COLUMN CUSTOM_ROLE_ID;
+
+-- 사용자-커스텀역할 다대다 조인 테이블
+-- ON DELETE CASCADE: 회원 또는 역할 삭제 시 연결 행 자동 제거
+CREATE TABLE USER_CUSTOM_ROLES (
+    USER_ID NUMBER NOT NULL,
+    ROLE_ID NUMBER NOT NULL,
+    CONSTRAINT PK_UCR      PRIMARY KEY (USER_ID, ROLE_ID),
+    CONSTRAINT FK_UCR_USER FOREIGN KEY (USER_ID) REFERENCES USERS(ID)        ON DELETE CASCADE,
+    CONSTRAINT FK_UCR_ROLE FOREIGN KEY (ROLE_ID) REFERENCES CUSTOM_ROLES(ID) ON DELETE CASCADE
+);
+
+CREATE INDEX IDX_UCR_USER ON USER_CUSTOM_ROLES(USER_ID);
+CREATE INDEX IDX_UCR_ROLE ON USER_CUSTOM_ROLES(ROLE_ID);

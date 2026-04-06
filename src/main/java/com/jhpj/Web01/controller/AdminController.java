@@ -1,5 +1,6 @@
 package com.jhpj.Web01.controller;
 
+import com.jhpj.Web01.entity.Permission;
 import com.jhpj.Web01.entity.User;
 import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.AdminService;
@@ -13,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,17 +55,35 @@ public class AdminController {
                 .map(User::getId)
                 .collect(Collectors.toSet());
 
-        model.addAttribute("users",           users);
-        model.addAttribute("totalUsers",      totalUsers);
-        model.addAttribute("adminCount",      adminCount);
-        model.addAttribute("unverifiedCount", unverifiedCount);
-        model.addAttribute("lockedCount",     lockedCount);
-        model.addAttribute("lockedIds",       lockedIds);
-        model.addAttribute("currentUsername", currentUser.getUsername());
-        model.addAttribute("categories",       adminService.findAllCategories());
-        model.addAttribute("notices",          adminService.findAllNotices());
-        model.addAttribute("importLastResult", importService.getLastRunResult());
-        model.addAttribute("importLastRunAt",  importService.getLastRunAt());
+        // ── 현재 로그인한 사용자의 권한 플래그 ──────────────────
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        // 공지 관리 접근 가능 여부 (관리자 또는 공지 쓰기/삭제 권한 보유)
+        boolean canManageNotices = isAdmin || currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("PERM_NOTICE_WRITE")
+                             || a.getAuthority().equals("PERM_NOTICE_DELETE"));
+        // 카테고리 관리 접근 가능 여부
+        boolean canManageCategories = isAdmin || currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("PERM_CATEGORY_MANAGE"));
+
+        model.addAttribute("users",               users);
+        model.addAttribute("totalUsers",          totalUsers);
+        model.addAttribute("adminCount",          adminCount);
+        model.addAttribute("unverifiedCount",     unverifiedCount);
+        model.addAttribute("lockedCount",         lockedCount);
+        model.addAttribute("lockedIds",           lockedIds);
+        model.addAttribute("currentUsername",     currentUser.getUsername());
+        model.addAttribute("categories",          adminService.findAllCategories());
+        model.addAttribute("notices",             adminService.findAllNotices());
+        model.addAttribute("importLastResult",    importService.getLastRunResult());
+        model.addAttribute("importLastRunAt",     importService.getLastRunAt());
+        // 커스텀 역할 관련
+        model.addAttribute("customRoles",         adminService.findAllCustomRoles());
+        model.addAttribute("allPermissions",      Permission.values());
+        // 접근 권한 플래그
+        model.addAttribute("isAdmin",             isAdmin);
+        model.addAttribute("canManageNotices",    canManageNotices);
+        model.addAttribute("canManageCategories", canManageCategories);
 
         return "admin";
     }
@@ -93,6 +114,23 @@ public class AdminController {
         return "redirect:/admin";
     }
 
+    /** 비밀번호 초기화 — 임시 비밀번호 생성 후 회원 이메일로 발송 */
+    @PostMapping("/users/{id}/reset-password")
+    public String resetPassword(@PathVariable Long id,
+                                @AuthenticationPrincipal UserDetails currentUser,
+                                RedirectAttributes ra) {
+        guardSelf(id, currentUser, ra, "자신의 비밀번호는 프로필에서 직접 변경해주세요.");
+        if (ra.getFlashAttributes().containsKey("errorMsg")) return "redirect:/admin";
+
+        try {
+            String email = adminService.resetPassword(id);
+            ra.addFlashAttribute("successMsg", "임시 비밀번호가 " + email + " 으로 발송되었습니다.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("errorMsg", "비밀번호 초기화 실패: " + e.getMessage());
+        }
+        return "redirect:/admin";
+    }
+
     /** 계정 잠금 해제 */
     @PostMapping("/users/{id}/unlock")
     public String unlockUser(@PathVariable Long id, RedirectAttributes ra) {
@@ -118,6 +156,79 @@ public class AdminController {
                         ra.addFlashAttribute("errorMsg", msg);
                     }
                 });
+    }
+
+    // ── 커스텀 역할 추가 ───────────────────────────────────────────
+    @PostMapping("/roles/add")
+    public String addCustomRole(@RequestParam String name,
+                                @RequestParam(required = false) String description,
+                                @RequestParam(required = false) List<String> permissions,
+                                RedirectAttributes ra) {
+        try {
+            // 요청 파라미터 String 목록 → Permission enum Set 변환
+            Set<Permission> permSet = parsePermissions(permissions);
+            adminService.addCustomRole(name, description, permSet);
+            ra.addFlashAttribute("successMsg", "커스텀 역할이 추가되었습니다: " + name);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin#custom-roles";
+    }
+
+    // ── 커스텀 역할 수정 (역할명, 설명, 권한) ──────────────────────
+    @PostMapping("/roles/{id}/update")
+    public String updateCustomRole(@PathVariable Long id,
+                                   @RequestParam String name,
+                                   @RequestParam(required = false) String description,
+                                   @RequestParam(required = false) List<String> permissions,
+                                   RedirectAttributes ra) {
+        try {
+            Set<Permission> permSet = parsePermissions(permissions);
+            adminService.updateCustomRole(id, name, description, permSet);
+            ra.addFlashAttribute("successMsg", "커스텀 역할이 수정되었습니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin#custom-roles";
+    }
+
+    // ── 커스텀 역할 삭제 ───────────────────────────────────────────
+    @PostMapping("/roles/{id}/delete")
+    public String deleteCustomRole(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            adminService.deleteCustomRole(id);
+            ra.addFlashAttribute("successMsg", "커스텀 역할이 삭제되었습니다. 해당 역할이 할당된 회원은 자동으로 역할 해제됩니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin#custom-roles";
+    }
+
+    // ── 회원에게 커스텀 역할 할당 (여러 개 지원) ──────────────────
+    @PostMapping("/users/{id}/custom-role")
+    public String assignCustomRoles(@PathVariable Long id,
+                                    @RequestParam(required = false) List<Long> roleIds,
+                                    RedirectAttributes ra) {
+        try {
+            Set<Long> roleIdSet = (roleIds != null) ? new HashSet<>(roleIds) : new HashSet<>();
+            adminService.assignCustomRoles(id, roleIdSet);
+            ra.addFlashAttribute("successMsg", "커스텀 역할이 변경되었습니다.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/admin";
+    }
+
+    /** 요청 파라미터 String 목록 → Permission enum Set 변환 (null/빈 입력 처리 포함) */
+    private Set<Permission> parsePermissions(List<String> permissionNames) {
+        if (permissionNames == null || permissionNames.isEmpty()) {
+            return new HashSet<>();
+        }
+        return permissionNames.stream()
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(Permission::valueOf)
+                .collect(Collectors.toSet());
     }
 
     // ── 퀘이사존 수집 트리거 ──────────────────────────────────────
