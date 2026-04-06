@@ -1,7 +1,7 @@
 # Web01 — Spring Boot 웹 애플리케이션
 
 Spring Boot 3 기반의 커뮤니티 웹 애플리케이션입니다.  
-Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 썸네일, 타입별 검색, 댓글, 좋아요), **알림 시스템**, **고정 공지 게시판**, **유저 사이드 패널**, **라이트/다크 테마**, **모바일 반응형 UI**, GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
+Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 인증, 관리자 대시보드, 프로필 관리, **Quill.js 리치 텍스트 게시판** (이미지·동영상 업로드, 썸네일, 타입별 검색, 댓글, 좋아요), **알림 시스템**, **고정 공지 게시판**, **커스텀 역할 & 세부 기능 권한 시스템**, **유저 사이드 패널**, **라이트/다크 테마**, **모바일 반응형 UI**, GitHub Actions CI/CD, Docker 컨테이너 배포까지 포함한 풀스택 구성입니다.
 
 ---
 
@@ -17,6 +17,7 @@ Oracle DB + Flyway 마이그레이션, Spring Security 인증 보호, 이메일 
 - [환경 설정 & 시크릿 관리](#환경-설정--시크릿-관리)
 - [CI/CD 파이프라인](#cicd-파이프라인)
 - [보안 정책](#보안-정책)
+- [최근 변경 이력](#최근-변경-이력)
 
 ---
 
@@ -49,7 +50,7 @@ src/main/java/com/jhpj/Web01/
 ├── ServletInitializer.java                # WAR 배포 설정 (지원)
 ├── IndexController.java                   # 기본 인덱스 엔드포인트
 ├── config/
-│   ├── SecurityConfig.java                # Spring Security 설정
+│   ├── SecurityConfig.java                # Spring Security 설정 (@EnableMethodSecurity 포함)
 │   ├── PasswordEncoderConfig.java         # BCrypt 인코더 빈 등록
 │   └── WebMvcConfig.java                  # 정적 파일 핸들러 (OS 경로 호환) + 스케줄러 활성화
 ├── controller/
@@ -57,15 +58,17 @@ src/main/java/com/jhpj/Web01/
 │   ├── HomeController.java                # 홈 (게시판 목록 통합)
 │   ├── BoardController.java               # 게시판 CRUD + 댓글 + 좋아요 + 공지 표시
 │   ├── FileUploadController.java          # 이미지 · 동영상 업로드 API
-│   ├── AdminController.java               # 관리자 대시보드 + 공지 관리 + 카테고리 관리
+│   ├── AdminController.java               # 관리자 대시보드 + 공지/카테고리/커스텀역할/비밀번호초기화
 │   ├── MyPostsController.java             # 내 글 관리
 │   ├── ProfileController.java             # 프로필 관리 + 이미지 업로드 + 비밀번호 재인증
 │   └── NotificationController.java        # 알림 REST API
 ├── entity/
-│   ├── User.java                          # 회원 엔티티 (UserDetails 구현)
-│   ├── Post.java                          # 게시글 엔티티
+│   ├── User.java                          # 회원 엔티티 (UserDetails 구현, 커스텀역할 다대다)
+│   ├── Post.java                          # 게시글 엔티티 (@Formula 댓글수 포함)
 │   ├── Comment.java                       # 댓글 엔티티
 │   ├── Category.java                      # 게시판 카테고리 엔티티
+│   ├── CustomRole.java                    # 커스텀 역할 엔티티 (관리자 생성/삭제 가능)
+│   ├── Permission.java                    # 세부 기능 권한 enum (5종)
 │   ├── PostLike.java                      # 좋아요 엔티티 (복합 UNIQUE)
 │   ├── PostFile.java                      # 파일 엔티티 (이미지/동영상)
 │   ├── Notice.java                        # 공지 엔티티 (다대다 카테고리 연결)
@@ -77,6 +80,7 @@ src/main/java/com/jhpj/Web01/
 │   ├── PostRepository.java                # fetch join 쿼리 + 제목/작성자/본문 검색 쿼리 포함
 │   ├── CommentRepository.java
 │   ├── CategoryRepository.java
+│   ├── CustomRoleRepository.java          # 커스텀 역할 조회
 │   ├── PostLikeRepository.java
 │   ├── PostFileRepository.java            # 고아 파일 조회 쿼리 포함
 │   ├── NoticeRepository.java              # 공지 조회 (EntityGraph, EXISTS 서브쿼리)
@@ -87,8 +91,8 @@ src/main/java/com/jhpj/Web01/
 │   ├── CustomUserDetailsService.java      # 인증 + 회원가입
 │   ├── BoardService.java                  # 게시글/댓글/좋아요/파일 + 알림 발송 연동
 │   ├── FileService.java                   # 파일 업로드 · 삭제 · 고아 정리 스케줄러
-│   ├── EmailService.java                  # 이메일 발송 (인증 / 변경)
-│   ├── AdminService.java                  # 관리자 회원 관리 + 공지 CRUD + 카테고리 CRUD
+│   ├── EmailService.java                  # 이메일 발송 (인증 / 변경 / 임시비밀번호)
+│   ├── AdminService.java                  # 관리자 회원 관리 + 공지/카테고리/커스텀역할 CRUD
 │   ├── ProfileService.java                # 프로필 변경 + 이미지 서비스 + 비밀번호 검증
 │   ├── NotificationService.java           # 알림 생성/조회/읽음 처리
 │   ├── QuasarZoneImportService.java       # 퀘이사존 특가/예판 크롤링 (1시간 주기)
@@ -116,7 +120,9 @@ src/main/resources/
 │   ├── V13__notifications.sql             # 알림 테이블
 │   ├── V14__notices.sql                   # 공지 테이블
 │   ├── V15__notices_add_category.sql      # 공지 단일 카테고리 (V16에서 대체)
-│   └── V16__notice_categories_many_to_many.sql  # 공지-카테고리 다대다 조인 테이블
+│   ├── V16__notice_categories_many_to_many.sql  # 공지-카테고리 다대다 조인 테이블
+│   ├── V17__custom_roles.sql              # 커스텀 역할 + 세부 기능 권한 테이블
+│   └── V18__user_multiple_custom_roles.sql      # 회원-커스텀역할 다대다 조인 테이블
 ├── static/
 │   ├── css/
 │   │   └── theme.css                      # 라이트/다크 모드 CSS 변수 & 오버라이드
@@ -124,7 +130,7 @@ src/main/resources/
 │   │   └── theme.js                       # FOUC 방지 테마 복원 스크립트
 │   └── favicon.svg
 └── templates/
-    ├── admin.html                         # 관리자 대시보드 (공지/카테고리/회원 관리)
+    ├── admin.html                         # 관리자 대시보드 (공지/카테고리/회원/커스텀역할 관리)
     ├── my-posts.html                      # 내 글 관리
     ├── profile.html                       # 프로필 수정
     ├── fragments/
@@ -135,7 +141,7 @@ src/main/resources/
     │   ├── profile-verify.html            # 프로필 접근 전 비밀번호 재인증
     │   └── verify-result.html
     └── board/
-        ├── board-list.html                # 게시판 목록 + 상단 고정 공지 + 홈
+        ├── board-list.html                # 게시판 목록 + 상단 고정 공지 + 홈 (댓글수 표시)
         ├── board-view.html                # 게시글 상세 (댓글, 좋아요 AJAX)
         └── board-write.html               # 게시글 작성/수정 (Quill.js 에디터)
 ```
@@ -161,11 +167,28 @@ src/main/resources/
 - 인메모리 `ConcurrentHashMap` 기반
 
 ### 권한 관리
-| 권한 | 접근 가능 경로 |
+
+#### 시스템 역할
+| 역할 | 접근 가능 경로 |
 |------|----------------|
 | 비로그인 | `/`, `/home`, `/board/**` (읽기 전용), `/auth/**` |
 | `ROLE_USER` | 비로그인 + 게시글 작성/수정/삭제, 댓글, 좋아요, `/profile/**`, `/my-posts/**` |
 | `ROLE_ADMIN` | 전체 + `/admin/**` |
+
+#### 커스텀 역할 & 세부 기능 권한
+관리자가 `ROLE_USER` / `ROLE_ADMIN` 외에 추가 역할을 자유롭게 생성하고, 아래 세부 기능 권한을 조합해 부여할 수 있습니다.  
+한 회원에게 **여러 커스텀 역할 동시 부여** 가능하며, 보유한 모든 역할의 권한이 합산 적용됩니다.
+
+| 권한 (Permission) | 설명 | 적용 위치 |
+|-------------------|------|-----------|
+| `POST_DELETE_OTHERS` | 타인 게시글 삭제 | BoardService.deletePost |
+| `COMMENT_DELETE_OTHERS` | 타인 댓글 삭제 | BoardService.deleteComment |
+| `NOTICE_WRITE` | 공지 작성/수정 | `/admin/notices/**` |
+| `NOTICE_DELETE` | 공지 삭제 | `/admin/notices/**` |
+| `CATEGORY_MANAGE` | 카테고리 추가/수정/삭제 | `/admin/categories/**` |
+
+Spring Security `getAuthorities()`에서 커스텀 역할의 권한을 `PERM_{권한명}` 형태로 자동 변환.  
+`@EnableMethodSecurity` 적용으로 `@PreAuthorize` 사용 가능.
 
 ### 라이트/다크 테마
 - 모든 페이지 공통 적용 (`fragments/header :: headerStyles` 프래그먼트)
@@ -175,15 +198,16 @@ src/main/resources/
 
 ### 게시판
 - **목록/검색**: 카테고리 필터 + **검색 타입(제목 / 작성자 / 제목+본문)** 선택 키워드 검색, 10건 페이징
+- **댓글 수 표시**: 게시글 목록에서 제목 옆 `[N]` 형태로 표시 (Hibernate `@Formula` 서브쿼리 — N+1 없음)
 - **썸네일**: 본문 첫 번째 이미지 자동 추출 표시, 동영상만 있는 경우 🎬 아이콘 표시
 - **Quill.js 리치 텍스트 에디터**: 폰트, 색상, 정렬, 코드블록, 이미지, 동영상 지원
 - **이미지 업로드**: 툴바 클릭 → 서버 저장 → URL 삽입 (최대 20MB)
 - **동영상 업로드**: 별도 버튼 → 서버 저장 → `<video controls>` 태그로 에디터 삽입 (최대 500MB)
-- **댓글**: AJAX 비동기 등록/수정/삭제 (본인 + 관리자 수정·삭제 가능)
+- **댓글**: AJAX 비동기 등록/수정/삭제 (본인 + 관리자 + `COMMENT_DELETE_OTHERS` 권한 보유자 삭제 가능)
 - **좋아요**: AJAX 토글, Oracle 트리거로 `POSTS.LIKE_COUNT` 자동 동기화
 - **조회수**: 상세 페이지 접근 시 자동 증가
 - **읽음 표시**: 읽은 게시글 목록에서 시각적으로 구분
-- **수정/삭제**: 작성자 또는 관리자만 가능
+- **수정/삭제**: 작성자 또는 관리자 가능 / 삭제는 `POST_DELETE_OTHERS` 권한 보유자도 가능
 - **비로그인 공개**: 목록 및 상세 읽기 가능, 작성/댓글/좋아요는 로그인 필요
 
 ### 공지 시스템
@@ -193,6 +217,7 @@ src/main/resources/
 - **노출 여부 토글**: 삭제 없이 숨김/표시 전환
 - 공지 클릭 시 모달로 내용 표시
 - 1페이지에서만 공지 표시 (페이지 2 이상 미표시)
+- `NOTICE_WRITE` / `NOTICE_DELETE` 커스텀 권한 보유자도 공지 관리 가능
 
 ### 알림 시스템
 - 내 게시글에 **댓글** 또는 **좋아요**가 달리면 실시간 알림 생성
@@ -231,11 +256,19 @@ src/main/resources/
 
 ### 관리자 대시보드 (`/admin`)
 - 통계 카드: 전체 회원 / 관리자 / 이메일 미인증 / 잠금 계정
-- 권한 변경 (`ROLE_USER` ↔ `ROLE_ADMIN`), 계정 잠금 해제, 이메일 인증 강제 완료, 회원 삭제
-- 자기 자신 권한 변경 및 삭제 방지
+- **회원 관리** (ROLE_ADMIN 전용)
+  - 시스템 권한 변경 (`ROLE_USER` ↔ `ROLE_ADMIN`)
+  - 커스텀 역할 할당 (체크박스 모달, 복수 선택)
+  - 계정 잠금 해제, 이메일 인증 강제 완료, 회원 삭제
+  - **비밀번호 초기화**: 12자리 임시 비밀번호 생성 → BCrypt 저장 → 회원 이메일로 발송
+  - 자기 자신 권한 변경 및 삭제 방지
+- **커스텀 역할 관리** (ROLE_ADMIN 전용)
+  - 역할 추가/수정/삭제 (역할명, 설명, 세부 기능 권한 체크박스 선택)
+  - 역할 삭제 시 해당 역할이 할당된 회원은 자동 해제 (ON DELETE CASCADE)
 - **공지 관리**: 등록/수정/삭제, 순서 변경(▲▼), 노출 여부 토글, 노출 게시판 다중 선택
 - **카테고리 관리**: 게시판 카테고리 추가/수정/삭제, 정렬 순서 관리
 - **퀘이사존 수집**: 수동 트리거 + 자동 1시간 주기 크롤링
+- **권한별 섹션 표시**: NOTICE_WRITE/DELETE 권한 보유자는 공지 관리, CATEGORY_MANAGE 권한 보유자는 카테고리 관리 섹션 접근 가능
 - **모바일 반응형**: 768px 이하에서 회원 목록·공지 목록을 테이블 대신 카드 레이아웃으로 표시
 
 ### 퀘이사존 특가/예판 크롤링
@@ -348,6 +381,8 @@ JPA `ddl-auto=validate`, **Flyway**로 DDL 관리. 앱 시작 시 `db/migration/
 | V14 | `V14__notices.sql` | NOTICES 테이블 + NOTICES_SEQ |
 | V15 | `V15__notices_add_category.sql` | NOTICES.CATEGORY_ID 단일 컬럼 (V16에서 대체) |
 | V16 | `V16__notice_categories_many_to_many.sql` | NOTICE_CATEGORIES 조인 테이블 (공지-카테고리 N:M) |
+| V17 | `V17__custom_roles.sql` | CUSTOM_ROLES + CUSTOM_ROLE_PERMISSIONS 테이블 |
+| V18 | `V18__user_multiple_custom_roles.sql` | USER_CUSTOM_ROLES 조인 테이블 (회원-역할 N:M) |
 
 > ⚠️ 기존 DB에 처음 Flyway를 적용할 때는 `baseline-on-migrate=true`, `baseline-version=9`로 설정하세요.
 
@@ -392,6 +427,26 @@ JPA `ddl-auto=validate`, **Flyway**로 DDL 관리. 앱 시작 시 `db/migration/
 |------|------|------|
 | NOTICE_ID | NUMBER | FK → NOTICES.ID (CASCADE DELETE) |
 | CATEGORY_ID | NUMBER | FK → CATEGORIES.ID (CASCADE DELETE) |
+
+**CUSTOM_ROLES**
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| ID | NUMBER | PK (CUSTOM_ROLES_SEQ) |
+| NAME | VARCHAR2(50) | 역할명 (UNIQUE) |
+| DESCRIPTION | VARCHAR2(200) | 역할 설명 |
+| CREATED_AT | TIMESTAMP | 생성일 |
+
+**CUSTOM_ROLE_PERMISSIONS** (역할별 세부 권한)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| ROLE_ID | NUMBER | FK → CUSTOM_ROLES.ID (CASCADE DELETE) |
+| PERMISSION | VARCHAR2(50) | POST_DELETE_OTHERS 등 Permission enum 값 |
+
+**USER_CUSTOM_ROLES** (회원-역할 N:M 조인 테이블)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| USER_ID | NUMBER | FK → USERS.ID (CASCADE DELETE) |
+| ROLE_ID | NUMBER | FK → CUSTOM_ROLES.ID (CASCADE DELETE) |
 
 **NOTIFICATIONS**
 | 컬럼 | 타입 | 설명 |
@@ -573,7 +628,9 @@ master push
 ## 🔐 보안 정책
 
 - 게시판 목록·상세는 비로그인도 읽기 가능, 작성/수정/삭제/댓글/좋아요는 인증 필수
-- `/admin/**`은 `ROLE_ADMIN` 전용
+- `/admin/users/**`, `/admin/roles/**`는 `ROLE_ADMIN` 전용
+- `/admin/notices/**`는 `ROLE_ADMIN` 또는 `PERM_NOTICE_WRITE` / `PERM_NOTICE_DELETE` 권한 보유자 접근 가능
+- `/admin/categories/**`는 `ROLE_ADMIN` 또는 `PERM_CATEGORY_MANAGE` 권한 보유자 접근 가능
 - CSRF 기본 활성화 (로그아웃 포함 모든 POST에 토큰 사용)
 - 비밀번호 정책: 영문 + 숫자 + 특수문자, 8자 이상
 - 로그인 5회 실패 시 10분 잠금
@@ -583,11 +640,28 @@ master push
 - 파일 업로드: MIME 타입 화이트리스트 검증, 크기 제한 (이미지 20MB / 동영상 500MB)
 - UUID 기반 저장 파일명으로 경로 추측 공격 방지
 - 아이디 변경 시 기존 세션 강제 무효화 (재로그인 유도)
+- **관리자 비밀번호 초기화**: SecureRandom 기반 12자리 임시 비밀번호 생성 → 즉시 이메일 발송
 - 관리자 자기 자신 권한 변경 및 삭제 방지
 - 동영상은 `<video>` 태그로 렌더링 (iframe 미사용 — `X-Frame-Options: DENY` 정책 준수)
 
 ---
 
+## 📝 최근 변경 이력
+
+| 날짜 | 내용 |
+|------|------|
+| 2026-04-06 | 커스텀 역할 & 세부 기능 권한 시스템 추가 (CUSTOM_ROLES, V17/V18 마이그레이션) |
+| 2026-04-06 | 커스텀 역할 다중 부여 지원 (USER_CUSTOM_ROLES N:M, 보유 역할 권한 합산 적용) |
+| 2026-04-06 | 관리자 → 회원 비밀번호 초기화 기능 추가 (SecureRandom 12자리 → 이메일 발송) |
+| 2026-04-06 | 게시판 목록 댓글 수 `[N]` 표시 (Hibernate @Formula 서브쿼리, N+1 없음) |
+| 2026-04-06 | 관리자 대시보드 모바일 반응형 — 회원/공지 목록 카드 레이아웃 전환 |
+| 2026-04-06 | 헤더 모바일(640px 이하) 햄버거 버튼 + 드롭다운 메뉴 추가 |
+| 2026-04-06 | 고정 공지 게시판 추가 (순서 변경, 노출 여부 토글, 다중 카테고리 연결) |
+| 2026-04-06 | 알림 시스템 추가 (댓글/좋아요 알림, 헤더 뱃지, REST API) |
+| 2026-04-06 | 유저 사이드 패널 추가 (우측 고정, 프로필/알림/로그아웃) |
+
+---
+
 ## 📝 라이선스
 
-본 프로젝트는 개인/학습 목적으로 작성되었습니다.
+Private Repository — All rights reserved.
