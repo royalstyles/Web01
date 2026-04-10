@@ -399,9 +399,9 @@
     </div>
 
     <!-- ════════════════════════════════════════
-         회원 관리 (관리자만 접근)
+         회원 관리 (관리자 전체 / 잠금·인증 권한자 일부)
     ════════════════════════════════════════ -->
-    <th:block th:if="${isAdmin}">
+    <th:block th:if="${isAdmin or canManageUsers}">
     <div class="section-title">👥 회원 관리</div>
     <div class="table-card">
         <div class="table-header">
@@ -415,9 +415,9 @@
                 <th>회원</th>
                 <th>이메일</th>
                 <th>시스템 권한</th>
-                <th>커스텀 역할</th>
+                <th th:if="${isAdmin}">커스텀 역할</th>
                 <th>인증 상태</th>
-                <th>가입일</th>
+                <th th:if="${isAdmin}">가입일</th>
                 <th>관리</th>
             </tr>
             </thead>
@@ -445,10 +445,9 @@
                           th:text="${user.role.name() == 'ROLE_ADMIN'} ? '👑 관리자' : '👤 일반'"></span>
                 </td>
 
-                <!-- 커스텀 역할 (여러 개 가능) -->
-                <td>
+                <!-- 커스텀 역할 (관리자만 표시) -->
+                <td th:if="${isAdmin}">
                     <div style="display:flex; flex-direction:column; gap:5px; min-width:140px;">
-                        <!-- 현재 할당된 커스텀 역할 배지 목록 -->
                         <div class="perm-tags" style="gap:3px;">
                             <span th:if="${user.customRoles.isEmpty()}"
                                   style="color:#9ca3af; font-size:12px;">없음</span>
@@ -456,7 +455,6 @@
                                   class="badge badge-custom-role"
                                   th:text="'🎭 ' + ${cr.name}"></span>
                         </div>
-                        <!-- 역할 할당 버튼 (자기 자신 제외) -->
                         <button th:unless="${user.username == currentUsername}"
                                 class="btn btn-edit"
                                 style="padding:3px 10px; font-size:11px; width:fit-content;"
@@ -475,18 +473,19 @@
                           class="badge badge-locked" style="margin-left:4px;">🔒 잠금</span>
                 </td>
 
-                <!-- 가입일 -->
-                <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                <!-- 가입일 (관리자만 표시) -->
+                <td th:if="${isAdmin}"
+                    th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
 
                 <!-- 액션 버튼 -->
                 <td>
                     <div class="action-group">
 
-                        <!-- 권한 변경 -->
-                        <th:block th:if="${user.username == currentUsername}">
+                        <!-- 권한 변경 (관리자만) -->
+                        <th:block th:if="${isAdmin and user.username == currentUsername}">
                             <button class="btn btn-role btn-self" disabled>권한 변경</button>
                         </th:block>
-                        <th:block th:unless="${user.username == currentUsername}">
+                        <th:block th:if="${isAdmin and user.username != currentUsername}">
                             <form th:action="@{/admin/users/{id}/role(id=${user.id})}" method="post">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit" class="btn btn-role"
@@ -495,22 +494,22 @@
                             </form>
                         </th:block>
 
-                        <!-- 잠금 해제 -->
-                        <form th:if="${lockedIds.contains(user.id)}"
+                        <!-- 잠금 해제 (관리자 또는 USER_LOCK_MANAGE 권한자) -->
+                        <form th:if="${canLockManage and lockedIds.contains(user.id)}"
                               th:action="@{/admin/users/{id}/unlock(id=${user.id})}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-unlock">🔓 잠금 해제</button>
                         </form>
 
-                        <!-- 인증 강제 -->
-                        <form th:unless="${user.emailVerified}"
+                        <!-- 인증 강제 (관리자 또는 USER_VERIFY_MANAGE 권한자) -->
+                        <form th:if="${canVerifyManage and !user.emailVerified}"
                               th:action="@{/admin/users/{id}/verify(id=${user.id})}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-verify">✉️ 인증 처리</button>
                         </form>
 
-                        <!-- 비밀번호 초기화 -->
-                        <th:block th:unless="${user.username == currentUsername}">
+                        <!-- 비밀번호 초기화 (관리자만) -->
+                        <th:block th:if="${isAdmin and user.username != currentUsername}">
                             <form th:action="@{/admin/users/{id}/reset-password(id=${user.id})}" method="post"
                                   th:data-user-name="${user.username}"
                                   onsubmit="return confirm(this.dataset.userName + ' 회원의 비밀번호를 초기화하고 임시 비밀번호를 이메일로 발송합니다.\n계속하시겠습니까?');">
@@ -519,11 +518,11 @@
                             </form>
                         </th:block>
 
-                        <!-- 삭제 -->
-                        <th:block th:if="${user.username == currentUsername}">
+                        <!-- 삭제 (관리자만) -->
+                        <th:block th:if="${isAdmin and user.username == currentUsername}">
                             <button class="btn btn-delete btn-self" disabled>삭제</button>
                         </th:block>
-                        <th:block th:unless="${user.username == currentUsername}">
+                        <th:block th:if="${isAdmin and user.username != currentUsername}">
                             <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post"
                                   onsubmit="return confirm('정말 삭제하시겠습니까?');">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -565,28 +564,31 @@
                 </div>
                 <!-- 액션 버튼 -->
                 <div class="mc-actions">
-                    <th:block th:if="${user.username == currentUsername}">
+                    <!-- 권한 변경 (관리자만) -->
+                    <th:block th:if="${isAdmin and user.username == currentUsername}">
                         <button class="btn btn-role btn-self" disabled>권한 변경</button>
                     </th:block>
-                    <th:block th:unless="${user.username == currentUsername}">
+                    <th:block th:if="${isAdmin and user.username != currentUsername}">
                         <form th:action="@{/admin/users/{id}/role(id=${user.id})}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-role"
                                     th:text="${user.role.name() == 'ROLE_ADMIN'} ? '→ 일반' : '→ 관리자'"></button>
                         </form>
                     </th:block>
-                    <form th:if="${lockedIds.contains(user.id)}"
+                    <!-- 잠금 해제 (관리자 또는 USER_LOCK_MANAGE 권한자) -->
+                    <form th:if="${canLockManage and lockedIds.contains(user.id)}"
                           th:action="@{/admin/users/{id}/unlock(id=${user.id})}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button type="submit" class="btn btn-unlock">🔓 잠금 해제</button>
                     </form>
-                    <form th:unless="${user.emailVerified}"
+                    <!-- 인증 강제 (관리자 또는 USER_VERIFY_MANAGE 권한자) -->
+                    <form th:if="${canVerifyManage and !user.emailVerified}"
                           th:action="@{/admin/users/{id}/verify(id=${user.id})}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button type="submit" class="btn btn-verify">✉️ 인증 처리</button>
                     </form>
-                    <!-- 비밀번호 초기화 (모바일) -->
-                    <th:block th:unless="${user.username == currentUsername}">
+                    <!-- 비밀번호 초기화 (관리자만) -->
+                    <th:block th:if="${isAdmin and user.username != currentUsername}">
                         <form th:action="@{/admin/users/{id}/reset-password(id=${user.id})}" method="post"
                               th:data-user-name="${user.username}"
                               onsubmit="return confirm(this.dataset.userName + ' 회원의 비밀번호를 초기화합니다.\n계속하시겠습니까?');">
@@ -594,11 +596,11 @@
                             <button type="submit" class="btn btn-reset-pw">🔑 초기화</button>
                         </form>
                     </th:block>
-
-                    <th:block th:if="${user.username == currentUsername}">
+                    <!-- 삭제 (관리자만) -->
+                    <th:block th:if="${isAdmin and user.username == currentUsername}">
                         <button class="btn btn-delete btn-self" disabled>삭제</button>
                     </th:block>
-                    <th:block th:unless="${user.username == currentUsername}">
+                    <th:block th:if="${isAdmin and user.username != currentUsername}">
                         <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post"
                               onsubmit="return confirm('정말 삭제하시겠습니까?');">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -609,12 +611,12 @@
             </div>
         </div>
     </div>
-    </th:block><!-- /isAdmin 회원 관리 -->
+    </th:block><!-- /isAdmin or canManageUsers 회원 관리 -->
 
     <!-- ════════════════════════════════════════
-         커스텀 역할 관리 (관리자만 접근)
+         커스텀 역할 목록 (관리자: 전체 관리 / CUSTOM_ROLE_VIEW 권한자: 조회·할당 회원 확인)
     ════════════════════════════════════════ -->
-    <th:block th:if="${isAdmin}">
+    <th:block th:if="${isAdmin or canViewCustomRoles}">
     <div class="section-title" id="custom-roles">🎭 커스텀 역할 관리</div>
     <div class="table-card">
         <div class="table-header">
@@ -630,12 +632,14 @@
                 <th>설명</th>
                 <th>부여된 세부 권한</th>
                 <th style="width:90px; text-align:center;">할당 회원</th>
-                <th style="width:200px;">관리</th>
+                <!-- 수정·삭제 열은 관리자만 표시 -->
+                <th th:if="${isAdmin}" style="width:200px;">관리</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${#lists.isEmpty(customRoles)}">
-                <td colspan="6" style="text-align:center; padding:40px 0; color:#9ca3af; font-size:14px;">
+                <td th:attr="colspan=${isAdmin} ? 6 : 5"
+                    style="text-align:center; padding:40px 0; color:#9ca3af; font-size:14px;">
                     📭 등록된 커스텀 역할이 없습니다.
                 </td>
             </tr>
@@ -655,26 +659,25 @@
                               th:text="${perm.displayName}"></span>
                     </div>
                 </td>
-                <!-- 할당 회원 수 + 회원 관리 버튼 -->
+                <!-- 할당 회원 수 버튼 -->
                 <td style="text-align:center;">
                     <button class="btn btn-role"
                             style="font-size:12px; padding:4px 10px;"
                             th:data-role-id="${cr.id}"
                             th:data-role-name="${cr.name}"
-                            th:onclick="'openRoleUsersModal(' + ${cr.id} + ', \'' + ${cr.name} + '\')'">
+                            onclick="openRoleUsersModal(this)">
                         👥 <span th:text="${roleUserCountMap[cr.id] != null ? roleUserCountMap[cr.id] : 0}">0</span>명
                     </button>
                 </td>
-                <td>
+                <!-- 수정·삭제 버튼 (관리자만) -->
+                <td th:if="${isAdmin}">
                     <div class="action-group">
-                        <!-- 수정 버튼 → 모달 오픈 -->
                         <button class="btn btn-edit"
                                 th:data-role-id="${cr.id}"
                                 th:data-role-name="${cr.name}"
                                 th:data-role-desc="${cr.description}"
                                 th:data-role-perms="${cr.permissions.![name()].toString()}"
                                 onclick="openRoleEditModal(this)">✏️ 수정</button>
-                        <!-- 삭제 -->
                         <form th:action="@{/admin/roles/{id}/delete(id=${cr.id})}" method="post"
                               onsubmit="return confirm('역할을 삭제하면 해당 역할이 할당된 회원의 역할이 해제됩니다. 삭제하시겠습니까?');">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -705,7 +708,9 @@
                     <!-- 할당 회원 수 버튼 -->
                     <button class="btn btn-role"
                             style="font-size:11px; padding:3px 8px; white-space:nowrap;"
-                            th:onclick="'openRoleUsersModal(' + ${cr.id} + ', \'' + ${cr.name} + '\')'">
+                            th:data-role-id="${cr.id}"
+                            th:data-role-name="${cr.name}"
+                            onclick="openRoleUsersModal(this)">
                         👥 <span th:text="${roleUserCountMap[cr.id] != null ? roleUserCountMap[cr.id] : 0}">0</span>명
                     </button>
                 </div>
@@ -717,8 +722,8 @@
                           class="perm-tag"
                           th:text="${perm.displayName}"></span>
                 </div>
-                <!-- 관리 버튼 -->
-                <div class="mc-actions">
+                <!-- 수정·삭제 버튼 (관리자만) -->
+                <div th:if="${isAdmin}" class="mc-actions">
                     <button class="btn btn-edit"
                             th:data-role-id="${cr.id}"
                             th:data-role-name="${cr.name}"
@@ -734,12 +739,12 @@
             </div>
         </div>
 
-        <!-- 커스텀 역할 추가 폼 -->
-        <div class="add-category-bar" style="flex-direction:column; align-items:stretch; gap:12px;">
+        <!-- 커스텀 역할 추가 폼 (관리자만) -->
+        <div th:if="${isAdmin}" class="add-category-bar"
+             style="flex-direction:column; align-items:stretch; gap:12px;">
             <form th:action="@{/admin/roles/add}" method="post"
                   style="display:flex; flex-direction:column; gap:12px; width:100%;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <!-- 역할명 + 설명 + 추가 버튼 -->
                 <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
                     <div style="flex:1; min-width:140px;">
                         <label>역할명 <span style="color:#dc2626;">*</span></label>
@@ -753,7 +758,6 @@
                     </div>
                     <button type="submit" class="btn-add" style="align-self:flex-end;">➕ 역할 추가</button>
                 </div>
-                <!-- 세부 기능 권한 체크박스 -->
                 <div>
                     <label style="font-size:12px; color:#6b7280; font-weight:500; display:block; margin-bottom:6px;">
                         부여할 세부 기능 권한
@@ -768,7 +772,7 @@
             </form>
         </div>
     </div>
-    </th:block><!-- /isAdmin 커스텀 역할 -->
+    </th:block><!-- /isAdmin or hasManagePermission 커스텀 역할 -->
 
     <!-- ════════════════════════════════════════
          공지 관리
@@ -1244,8 +1248,10 @@
 
 <script th:inline="javascript">
     /* CSRF 토큰 — AJAX POST 요청에 사용 */
-    const csrfParamName = /*[[${_csrf.parameterName}]]*/ '_csrf';
+    const csrfParamName  = /*[[${_csrf.parameterName}]]*/ '_csrf';
     const csrfTokenValue = /*[[${_csrf.token}]]*/ '';
+    /* 현재 로그인 사용자가 관리자인지 여부 — 모달 내 역할 해제 버튼 표시 제어 */
+    const isAdminUser = /*[[${isAdmin}]]*/ false;
 
     /* 현재 사용 중인 정렬 순서 목록 (Thymeleaf에서 주입) */
     const usedSortOrders = /*[[${categories.![sortOrder]}]]*/ [];
@@ -1389,10 +1395,11 @@
 
     /**
      * 역할에 할당된 회원 목록 모달 오픈
-     * @param {number} roleId   - 커스텀 역할 ID
-     * @param {string} roleName - 커스텀 역할명 (모달 제목 표시용)
+     * @param {HTMLElement} btn - data-role-id, data-role-name 속성을 가진 버튼 요소
      */
-    async function openRoleUsersModal(roleId, roleName) {
+    async function openRoleUsersModal(btn) {
+        const roleId   = btn.dataset.roleId;
+        const roleName = btn.dataset.roleName;
         currentRoleUsersModalId = roleId;
         document.getElementById('role-users-modal-title').textContent = '🎭 ' + roleName + ' 역할 할당 회원';
         document.getElementById('role-users-modal').classList.add('open');
@@ -1426,10 +1433,11 @@
                         <span style="font-size:14px;font-weight:600;color:#1e1b4b;">${u.username}</span>
                         <span style="font-size:12px;color:#9ca3af;margin-left:8px;">${u.email}</span>
                     </div>
+                    ${isAdminUser ? `
                     <button class="btn btn-delete" style="font-size:12px;padding:4px 10px;"
                             onclick="unassignRoleFromUser(${roleId}, ${u.id})">
                         해제
-                    </button>
+                    </button>` : ''}
                 </div>
             `).join('');
         } catch (e) {
@@ -1466,9 +1474,9 @@
                 listEl.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px;">할당된 회원이 없습니다.</div>';
             }
 
-            // 테이블·카드의 회원 수 배지 업데이트 (onclick 속성에 roleId가 포함된 버튼 탐색)
-            document.querySelectorAll('button[onclick]').forEach(btn => {
-                if (btn.getAttribute('onclick').includes('openRoleUsersModal(' + roleId + ',')) {
+            // 테이블·카드의 회원 수 배지 업데이트 (data-role-id 속성으로 탐색)
+            document.querySelectorAll('button[data-role-id="' + roleId + '"]').forEach(btn => {
+                if (btn.getAttribute('onclick') === 'openRoleUsersModal(this)') {
                     const span = btn.querySelector('span');
                     if (span) span.textContent = Math.max(0, parseInt(span.textContent) - 1);
                 }

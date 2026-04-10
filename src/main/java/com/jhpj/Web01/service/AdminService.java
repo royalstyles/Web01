@@ -47,6 +47,41 @@ public class AdminService {
     private static final int TEMP_PW_LENGTH   = 12;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    /**
+     * 관리자 대시보드 통계 집계 결과
+     * @param totalUsers      전체 회원 수
+     * @param adminCount      관리자 수
+     * @param unverifiedCount 이메일 미인증 수
+     * @param lockedCount     계정 잠금 수
+     * @param lockedIds       잠금된 회원 ID Set (Thymeleaf 조건 렌더링용)
+     */
+    public record DashboardStats(
+            long totalUsers,
+            long adminCount,
+            long unverifiedCount,
+            long lockedCount,
+            Set<Long> lockedIds
+    ) {}
+
+    /**
+     * 관리자 대시보드 통계 집계
+     * loginAttemptService 가 이미 주입되어 있으므로 서비스 레이어에서 처리
+     */
+    @Transactional(readOnly = true)
+    public DashboardStats calcDashboardStats() {
+        List<User> users = userRepository.findAll();
+        long totalUsers      = users.size();
+        long adminCount      = users.stream().filter(u -> u.getRole() == User.Role.ROLE_ADMIN).count();
+        long unverifiedCount = users.stream().filter(u -> !u.isEmailVerified()).count();
+
+        Set<Long> lockedIds = users.stream()
+                .filter(u -> loginAttemptService.isBlocked(u.getUsername()))
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        return new DashboardStats(totalUsers, adminCount, unverifiedCount, lockedIds.size(), lockedIds);
+    }
+
     /** 권한 토글: ROLE_USER ↔ ROLE_ADMIN */
     @Transactional
     public void toggleRole(Long userId) {

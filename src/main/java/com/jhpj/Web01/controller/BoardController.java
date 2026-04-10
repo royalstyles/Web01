@@ -5,6 +5,7 @@ import com.jhpj.Web01.entity.Comment;
 import com.jhpj.Web01.entity.Post;
 import com.jhpj.Web01.service.AdminService;
 import com.jhpj.Web01.service.BoardService;
+import com.jhpj.Web01.util.AuthorityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -127,17 +128,16 @@ public class BoardController {
             model.addAttribute("currentUsername", userDetails.getUsername());
 
             boolean isAuthor = post.getAuthor().getUsername().equals(userDetails.getUsername());
-            boolean isAdmin  = userDetails.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            boolean isAdmin  = AuthorityUtils.isAdmin(userDetails);
+            // POST_EDIT_OTHERS 커스텀 권한 보유 여부 확인
+            boolean canEditOthersPost   = AuthorityUtils.hasAuthority(userDetails, "PERM_POST_EDIT_OTHERS");
             // POST_DELETE_OTHERS 커스텀 권한 보유 여부 확인
-            boolean canDeleteOthersPost = userDetails.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("PERM_POST_DELETE_OTHERS"));
+            boolean canDeleteOthersPost = AuthorityUtils.hasAuthority(userDetails, "PERM_POST_DELETE_OTHERS");
             // COMMENT_DELETE_OTHERS 커스텀 권한 보유 여부 확인
-            boolean canDeleteOthersComments = isAdmin || userDetails.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("PERM_COMMENT_DELETE_OTHERS"));
+            boolean canDeleteOthersComments = isAdmin || AuthorityUtils.hasAuthority(userDetails, "PERM_COMMENT_DELETE_OTHERS");
 
-            // 수정은 작성자·관리자만, 삭제는 커스텀 권한자도 허용
-            model.addAttribute("canEdit",   isAuthor || isAdmin);
+            // 수정: 작성자·관리자·POST_EDIT_OTHERS, 삭제: 작성자·관리자·POST_DELETE_OTHERS
+            model.addAttribute("canEdit",   isAuthor || isAdmin || canEditOthersPost);
             model.addAttribute("canDelete", isAuthor || isAdmin || canDeleteOthersPost);
             model.addAttribute("canDeleteOthersComments", canDeleteOthersComments);
         } else {
@@ -161,11 +161,11 @@ public class BoardController {
 
         Post post = boardService.getPostReadOnly(postId);
 
-        boolean isAuthor = post.getAuthor().getUsername().equals(userDetails.getUsername());
-        boolean isAdmin  = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAuthor      = post.getAuthor().getUsername().equals(userDetails.getUsername());
+        boolean isAdmin       = AuthorityUtils.isAdmin(userDetails);
+        boolean canEditOthers = AuthorityUtils.hasAuthority(userDetails, "PERM_POST_EDIT_OTHERS");
 
-        if (!isAuthor && !isAdmin) {
+        if (!isAuthor && !isAdmin && !canEditOthers) {
             ra.addFlashAttribute("errorMsg", "수정 권한이 없습니다.");
             return "redirect:/board/" + postId;
         }

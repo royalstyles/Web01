@@ -4,6 +4,7 @@ import com.jhpj.Web01.service.CustomUserDetailsService;
 import com.jhpj.Web01.service.LoginAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -63,7 +64,25 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // ── 1. 관리자 전용 경로 (구체적인 것 먼저) ─────────────────
-                        // 회원 관리, 커스텀 역할 관리, 외부 수집은 관리자만
+                        // 회원 잠금 해제 — 관리자 또는 USER_LOCK_MANAGE 권한 보유자
+                        .requestMatchers("/admin/users/*/unlock").access(
+                                new WebExpressionAuthorizationManager(
+                                        "hasRole('ADMIN') or hasAuthority('PERM_USER_LOCK_MANAGE')"
+                                )
+                        )
+                        // 이메일 인증 강제 — 관리자 또는 USER_VERIFY_MANAGE 권한 보유자
+                        .requestMatchers("/admin/users/*/verify").access(
+                                new WebExpressionAuthorizationManager(
+                                        "hasRole('ADMIN') or hasAuthority('PERM_USER_VERIFY_MANAGE')"
+                                )
+                        )
+                        // 커스텀 역할 목록·할당 회원 조회 — 관리자 또는 CUSTOM_ROLE_VIEW 권한 보유자
+                        .requestMatchers(HttpMethod.GET, "/admin/roles/*/users").access(
+                                new WebExpressionAuthorizationManager(
+                                        "hasRole('ADMIN') or hasAuthority('PERM_CUSTOM_ROLE_VIEW')"
+                                )
+                        )
+                        // 나머지 회원 관리, 커스텀 역할 관리, 외부 수집은 관리자만
                         .requestMatchers("/admin/users/**").hasRole("ADMIN")
                         .requestMatchers("/admin/roles/**").hasRole("ADMIN")
                         .requestMatchers("/admin/import/**").hasRole("ADMIN")
@@ -84,7 +103,9 @@ public class SecurityConfig {
                         .requestMatchers("/admin", "/admin/").access(
                                 new WebExpressionAuthorizationManager(
                                         "hasRole('ADMIN') or hasAuthority('PERM_NOTICE_WRITE') or " +
-                                        "hasAuthority('PERM_NOTICE_DELETE') or hasAuthority('PERM_CATEGORY_MANAGE')"
+                                        "hasAuthority('PERM_NOTICE_DELETE') or hasAuthority('PERM_CATEGORY_MANAGE') or " +
+                                        "hasAuthority('PERM_USER_LOCK_MANAGE') or hasAuthority('PERM_USER_VERIFY_MANAGE') or " +
+                                        "hasAuthority('PERM_CUSTOM_ROLE_VIEW')"
                                 )
                         )
                         // 나머지 /admin/** 은 관리자만

@@ -303,12 +303,13 @@ public class BoardService {
     }
 
     /**
-     * 게시글 수정 권한 확인 — 본인 또는 관리자만 수정 가능
+     * 게시글 수정 권한 확인 — 본인, 관리자, 또는 POST_EDIT_OTHERS 권한 보유자
      */
     private void checkAuthor(Post post, String username) {
         User user = findUser(username);
         boolean isAdmin = user.getRole() == User.Role.ROLE_ADMIN;
-        if (!post.getAuthor().getUsername().equals(username) && !isAdmin) {
+        boolean hasPermission = user.hasPermission(Permission.POST_EDIT_OTHERS);
+        if (!post.getAuthor().getUsername().equals(username) && !isAdmin && !hasPermission) {
             throw new IllegalStateException("수정 권한이 없습니다.");
         }
     }

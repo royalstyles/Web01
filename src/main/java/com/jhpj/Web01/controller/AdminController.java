@@ -1,11 +1,10 @@
 package com.jhpj.Web01.controller;
 
 import com.jhpj.Web01.entity.Permission;
-import com.jhpj.Web01.entity.User;
 import com.jhpj.Web01.repository.UserRepository;
 import com.jhpj.Web01.service.AdminService;
-import com.jhpj.Web01.service.LoginAttemptService;
 import com.jhpj.Web01.service.QuasarZoneImportService;
+import com.jhpj.Web01.util.AuthorityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +33,6 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final AdminService adminService;
-    private final LoginAttemptService loginAttemptService;
     private final QuasarZoneImportService importService;
 
     /** 대시보드 */
@@ -43,37 +40,31 @@ public class AdminController {
     public String dashboard(Model model,
                             @AuthenticationPrincipal UserDetails currentUser) {
 
-        List<User> users = userRepository.findAll();
-
-        // ── 통계 ──────────────────────────────────────────
-        long totalUsers     = users.size();
-        long adminCount     = users.stream().filter(u -> u.getRole() == User.Role.ROLE_ADMIN).count();
-        long unverifiedCount= users.stream().filter(u -> !u.isEmailVerified()).count();
-        long lockedCount    = users.stream().filter(u -> loginAttemptService.isBlocked(u.getUsername())).count();
-
-        // ── 잠금된 userId Set (Thymeleaf 조건 렌더링용) ──
-        Set<Long> lockedIds = users.stream()
-                .filter(u -> loginAttemptService.isBlocked(u.getUsername()))
-                .map(User::getId)
-                .collect(Collectors.toSet());
+        // ── 통계 (서비스 레이어에서 집계) ────────────────────
+        AdminService.DashboardStats stats = adminService.calcDashboardStats();
 
         // ── 현재 로그인한 사용자의 권한 플래그 ──────────────────
-        boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin             = AuthorityUtils.isAdmin(currentUser);
         // 공지 관리 접근 가능 여부 (관리자 또는 공지 쓰기/삭제 권한 보유)
-        boolean canManageNotices = isAdmin || currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("PERM_NOTICE_WRITE")
-                             || a.getAuthority().equals("PERM_NOTICE_DELETE"));
+        boolean canManageNotices    = isAdmin || AuthorityUtils.hasAnyAuthority(currentUser,
+                                            "PERM_NOTICE_WRITE", "PERM_NOTICE_DELETE");
         // 카테고리 관리 접근 가능 여부
-        boolean canManageCategories = isAdmin || currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("PERM_CATEGORY_MANAGE"));
+        boolean canManageCategories = isAdmin || AuthorityUtils.hasAuthority(currentUser, "PERM_CATEGORY_MANAGE");
+        // 커스텀 역할 목록·할당 회원 조회 가능 여부
+        boolean canViewCustomRoles  = isAdmin || AuthorityUtils.hasAuthority(currentUser, "PERM_CUSTOM_ROLE_VIEW");
+        // 회원 잠금/해제 가능 여부
+        boolean canLockManage       = isAdmin || AuthorityUtils.hasAuthority(currentUser, "PERM_USER_LOCK_MANAGE");
+        // 이메일 인증 강제 처리 가능 여부
+        boolean canVerifyManage     = isAdmin || AuthorityUtils.hasAuthority(currentUser, "PERM_USER_VERIFY_MANAGE");
+        // 회원 관리 섹션 접근 가능 여부 (일부 기능 한정)
+        boolean canManageUsers      = canLockManage || canVerifyManage;
 
-        model.addAttribute("users",               users);
-        model.addAttribute("totalUsers",          totalUsers);
-        model.addAttribute("adminCount",          adminCount);
-        model.addAttribute("unverifiedCount",     unverifiedCount);
-        model.addAttribute("lockedCount",         lockedCount);
-        model.addAttribute("lockedIds",           lockedIds);
+        model.addAttribute("users",               userRepository.findAll());
+        model.addAttribute("totalUsers",          stats.totalUsers());
+        model.addAttribute("adminCount",          stats.adminCount());
+        model.addAttribute("unverifiedCount",     stats.unverifiedCount());
+        model.addAttribute("lockedCount",         stats.lockedCount());
+        model.addAttribute("lockedIds",           stats.lockedIds());
         model.addAttribute("currentUsername",     currentUser.getUsername());
         model.addAttribute("categories",          adminService.findAllCategories());
         model.addAttribute("notices",             adminService.findAllNotices());
@@ -88,6 +79,10 @@ public class AdminController {
         model.addAttribute("isAdmin",             isAdmin);
         model.addAttribute("canManageNotices",    canManageNotices);
         model.addAttribute("canManageCategories", canManageCategories);
+        model.addAttribute("canManageUsers",      canManageUsers);
+        model.addAttribute("canLockManage",       canLockManage);
+        model.addAttribute("canVerifyManage",     canVerifyManage);
+        model.addAttribute("canViewCustomRoles",  canViewCustomRoles);
 
         return "admin";
     }

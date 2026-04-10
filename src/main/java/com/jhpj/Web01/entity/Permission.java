@@ -11,6 +11,9 @@ public enum Permission {
     /** 타인이 작성한 게시글 삭제 가능 — BoardService.deletePost() 에서 검증 */
     POST_DELETE_OTHERS("타인 게시글 삭제"),
 
+    /** 타인이 작성한 게시글 수정 가능 — BoardService.checkAuthor() 에서 검증 */
+    POST_EDIT_OTHERS("타인 게시글 수정"),
+
     /** 타인이 작성한 댓글 삭제 가능 — BoardService.deleteComment() 에서 검증 */
     COMMENT_DELETE_OTHERS("타인 댓글 삭제"),
 
@@ -21,7 +24,16 @@ public enum Permission {
     NOTICE_DELETE("공지 삭제"),
 
     /** 게시판 카테고리 추가/수정/삭제 가능 — /admin/categories/** 접근 허용 */
-    CATEGORY_MANAGE("카테고리 관리");
+    CATEGORY_MANAGE("카테고리 관리"),
+
+    /** 회원 계정 잠금 해제 가능 — /admin/users/{id}/unlock 접근 허용 */
+    USER_LOCK_MANAGE("회원 잠금/해제"),
+
+    /** 회원 이메일 인증 강제 처리 가능 — /admin/users/{id}/verify 접근 허용 */
+    USER_VERIFY_MANAGE("이메일 인증 처리"),
+
+    /** 커스텀 역할 목록 및 할당 회원 조회 가능 — /admin/roles/* users GET 접근 허용 */
+    CUSTOM_ROLE_VIEW("커스텀 역할 목록 조회");
 
     /** 관리자 화면에 표시될 한국어 이름 */
     private final String displayName;

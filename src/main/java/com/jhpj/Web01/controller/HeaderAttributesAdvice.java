@@ -1,6 +1,7 @@
 package com.jhpj.Web01.controller;
 
 import com.jhpj.Web01.repository.UserRepository;
+import com.jhpj.Web01.util.AuthorityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,13 +30,11 @@ public class HeaderAttributesAdvice {
     public void addHeaderAttributes(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         if (userDetails != null) {
             // 로그인 상태: 사용자 정보 및 권한 주입
-            boolean isAdmin = userDetails.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            // 관리자가 아니더라도 공지·카테고리 관리 권한이 있으면 관리 패널 접근 허용
-            boolean hasManagePermission = isAdmin || userDetails.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("PERM_NOTICE_WRITE")
-                                || a.getAuthority().equals("PERM_NOTICE_DELETE")
-                                || a.getAuthority().equals("PERM_CATEGORY_MANAGE"));
+            boolean isAdmin = AuthorityUtils.isAdmin(userDetails);
+            // 관리자가 아니더라도 관리 관련 권한이 있으면 관리 패널 접근 허용
+            boolean hasManagePermission = isAdmin || AuthorityUtils.hasAnyAuthority(userDetails,
+                    "PERM_NOTICE_WRITE", "PERM_NOTICE_DELETE", "PERM_CATEGORY_MANAGE",
+                    "PERM_USER_LOCK_MANAGE", "PERM_USER_VERIFY_MANAGE", "PERM_CUSTOM_ROLE_VIEW");
             model.addAttribute("isLoggedIn",          true);
             model.addAttribute("username",             userDetails.getUsername());
             model.addAttribute("isAdmin",              isAdmin);
