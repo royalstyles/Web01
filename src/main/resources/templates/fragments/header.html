@@ -663,10 +663,10 @@
             </a>
             <!-- 아이디 -->
             <div class="usp-username" th:text="${username}">username</div>
-            <!-- 권한 뱃지 -->
+            <!-- 권한 뱃지: 관리자 / 관리 권한 보유 회원 / 일반 회원 -->
             <div class="usp-role"
                  th:classappend="${isAdmin} ? 'usp-role-admin' : 'usp-role-user'"
-                 th:text="${isAdmin} ? '👑 관리자' : '👤 일반 회원'"></div>
+                 th:text="${isAdmin} ? '👑 관리자' : (${hasManagePermission} ? '⚙️ 권한 회원' : '👤 일반 회원')"></div>
 
             <div class="usp-divider"></div>
 
@@ -727,12 +727,14 @@
                 </div>
                 <div class="header-user-info">
                     <span class="header-username" th:text="${username}">username</span>
-                    <span class="header-role" th:text="${isAdmin} ? '관리자' : '일반 회원'"></span>
+                    <span class="header-role" th:text="${isAdmin} ? '관리자' : (${hasManagePermission} ? '권한 회원' : '일반 회원')"></span>
                 </div>
             </div>
             <a th:href="@{/my-posts}" class="header-btn">📝 내 글 관리</a>
             <a th:href="@{/profile/verify}" class="header-btn">⚙️ 프로필</a>
+            <!-- 관리자: 👑 관리자 / 관리 권한 보유 일반 회원: ⚙️ 관리 패널 -->
             <a th:if="${isAdmin}" th:href="@{/admin}" class="header-btn">👑 관리자</a>
+            <a th:if="${!isAdmin and hasManagePermission}" th:href="@{/admin}" class="header-btn">⚙️ 관리 패널</a>
             <form th:action="@{/auth/logout}" method="post" style="display:inline;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="header-btn header-btn-outline">로그아웃</button>
@@ -757,6 +759,7 @@
             <a th:href="@{/my-posts}" class="mobile-menu-item">📝 내 작성글</a>
             <a th:href="@{/profile/verify}" class="mobile-menu-item">⚙️ 프로필 설정</a>
             <a th:if="${isAdmin}" th:href="@{/admin}" class="mobile-menu-item">👑 관리자</a>
+            <a th:if="${!isAdmin and hasManagePermission}" th:href="@{/admin}" class="mobile-menu-item">⚙️ 관리 패널</a>
             <form th:action="@{/auth/logout}" method="post" style="width:100%;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="mobile-menu-item mobile-menu-item-logout">🚪 로그아웃</button>

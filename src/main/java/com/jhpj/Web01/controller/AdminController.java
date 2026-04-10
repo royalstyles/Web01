@@ -9,6 +9,7 @@ import com.jhpj.Web01.service.QuasarZoneImportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -80,6 +82,8 @@ public class AdminController {
         // 커스텀 역할 관련
         model.addAttribute("customRoles",         adminService.findAllCustomRoles());
         model.addAttribute("allPermissions",      Permission.values());
+        // 역할별 할당 회원 수 (roleId → count)
+        model.addAttribute("roleUserCountMap",    adminService.getRoleUserCountMap());
         // 접근 권한 플래그
         model.addAttribute("isAdmin",             isAdmin);
         model.addAttribute("canManageNotices",    canManageNotices);
@@ -190,6 +194,44 @@ public class AdminController {
             ra.addFlashAttribute("errorMsg", e.getMessage());
         }
         return "redirect:/admin#custom-roles";
+    }
+
+    // ── 역할에 할당된 회원 목록 조회 (AJAX) ──────────────────────
+    @GetMapping("/roles/{id}/users")
+    @ResponseBody
+    public ResponseEntity<?> getRoleUsers(@PathVariable Long id) {
+        try {
+            List<Map<String, Object>> users = adminService.getUsersByCustomRoleId(id).stream()
+                    .map(u -> Map.<String, Object>of(
+                            "id",       u.getId(),
+                            "username", u.getUsername(),
+                            "email",    u.getEmail()
+                    ))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(users);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ── 특정 회원에서 역할 해제 (AJAX) ───────────────────────────
+    @PostMapping("/roles/{roleId}/unassign/{userId}")
+    @ResponseBody
+    public ResponseEntity<?> unassignRole(@PathVariable Long roleId,
+                                          @PathVariable Long userId,
+                                          @AuthenticationPrincipal UserDetails currentUser) {
+        // 자기 자신의 역할은 해제 불가
+        userRepository.findByUsername(currentUser.getUsername()).ifPresent(me -> {
+            if (me.getId().equals(userId)) {
+                throw new IllegalStateException("자신의 역할은 이 화면에서 해제할 수 없습니다.");
+            }
+        });
+        try {
+            adminService.unassignCustomRole(userId, roleId);
+            return ResponseEntity.ok(Map.of("message", "역할이 해제되었습니다."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     // ── 커스텀 역할 삭제 ───────────────────────────────────────────

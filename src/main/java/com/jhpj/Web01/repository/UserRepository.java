@@ -3,6 +3,7 @@ package com.jhpj.Web01.repository;
 import com.jhpj.Web01.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,4 +20,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** 회원가입 및 이메일 변경 시 이메일 중복 검사 */
     boolean existsByEmail(String email);
+
+    /** 특정 커스텀 역할이 할당된 회원 목록 조회 */
+    List<User> findByCustomRoles_Id(Long roleId);
+
+    /** 특정 커스텀 역할이 할당된 회원 수 카운트 */
+    long countByCustomRoles_Id(Long roleId);
 }

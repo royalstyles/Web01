@@ -629,12 +629,13 @@
                 <th>역할명</th>
                 <th>설명</th>
                 <th>부여된 세부 권한</th>
-                <th style="width:160px;">관리</th>
+                <th style="width:90px; text-align:center;">할당 회원</th>
+                <th style="width:200px;">관리</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${#lists.isEmpty(customRoles)}">
-                <td colspan="5" style="text-align:center; padding:40px 0; color:#9ca3af; font-size:14px;">
+                <td colspan="6" style="text-align:center; padding:40px 0; color:#9ca3af; font-size:14px;">
                     📭 등록된 커스텀 역할이 없습니다.
                 </td>
             </tr>
@@ -653,6 +654,16 @@
                               class="perm-tag"
                               th:text="${perm.displayName}"></span>
                     </div>
+                </td>
+                <!-- 할당 회원 수 + 회원 관리 버튼 -->
+                <td style="text-align:center;">
+                    <button class="btn btn-role"
+                            style="font-size:12px; padding:4px 10px;"
+                            th:data-role-id="${cr.id}"
+                            th:data-role-name="${cr.name}"
+                            th:onclick="'openRoleUsersModal(' + ${cr.id} + ', \'' + ${cr.name} + '\')'">
+                        👥 <span th:text="${roleUserCountMap[cr.id] != null ? roleUserCountMap[cr.id] : 0}">0</span>명
+                    </button>
                 </td>
                 <td>
                     <div class="action-group">
@@ -674,6 +685,54 @@
             </tr>
             </tbody>
         </table>
+
+        <!-- 모바일 카드 목록 (768px 이하에서 표시) -->
+        <div class="mobile-cards">
+            <div th:if="${#lists.isEmpty(customRoles)}"
+                 style="text-align:center; padding:32px 0; color:#9ca3af; font-size:14px;">
+                📭 등록된 커스텀 역할이 없습니다.
+            </div>
+            <div class="mobile-card" th:each="cr : ${customRoles}">
+                <!-- 역할명 + 할당 회원 수 -->
+                <div class="mc-top">
+                    <div class="mc-info">
+                        <div class="mc-name">
+                            <span class="badge badge-custom-role" th:text="'🎭 ' + ${cr.name}"></span>
+                        </div>
+                        <div class="mc-sub"
+                             th:text="${cr.description != null ? cr.description : '설명 없음'}"></div>
+                    </div>
+                    <!-- 할당 회원 수 버튼 -->
+                    <button class="btn btn-role"
+                            style="font-size:11px; padding:3px 8px; white-space:nowrap;"
+                            th:onclick="'openRoleUsersModal(' + ${cr.id} + ', \'' + ${cr.name} + '\')'">
+                        👥 <span th:text="${roleUserCountMap[cr.id] != null ? roleUserCountMap[cr.id] : 0}">0</span>명
+                    </button>
+                </div>
+                <!-- 부여된 세부 권한 태그 -->
+                <div class="mc-badges">
+                    <span th:if="${cr.permissions.isEmpty()}"
+                          style="font-size:12px; color:#9ca3af;">권한 없음</span>
+                    <span th:each="perm : ${cr.permissions}"
+                          class="perm-tag"
+                          th:text="${perm.displayName}"></span>
+                </div>
+                <!-- 관리 버튼 -->
+                <div class="mc-actions">
+                    <button class="btn btn-edit"
+                            th:data-role-id="${cr.id}"
+                            th:data-role-name="${cr.name}"
+                            th:data-role-desc="${cr.description}"
+                            th:data-role-perms="${cr.permissions.![name()].toString()}"
+                            onclick="openRoleEditModal(this)">✏️ 수정</button>
+                    <form th:action="@{/admin/roles/{id}/delete(id=${cr.id})}" method="post"
+                          onsubmit="return confirm('역할을 삭제하면 해당 역할이 할당된 회원의 역할이 해제됩니다. 삭제하시겠습니까?');">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-delete">🗑 삭제</button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <!-- 커스텀 역할 추가 폼 -->
         <div class="add-category-bar" style="flex-direction:column; align-items:stretch; gap:12px;">
@@ -1059,6 +1118,25 @@
     </div>
 </div>
 
+<!-- ── 역할 할당 회원 관리 모달 ── -->
+<div id="role-users-modal" class="modal-overlay" onclick="if(event.target===this)closeRoleUsersModal()">
+    <div class="modal-box" style="width:480px; max-height:80vh; display:flex; flex-direction:column;">
+        <p class="modal-title">👥 할당 회원 관리</p>
+        <p id="role-users-modal-title"
+           style="font-size:13px; color:#6b7280; margin-bottom:12px;"></p>
+        <!-- 회원 목록 (스크롤 가능) -->
+        <div id="role-users-list"
+             style="flex:1; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:16px; min-height:80px;">
+            <div style="text-align:center; padding:24px; color:#9ca3af; font-size:13px;">
+                불러오는 중...
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" onclick="closeRoleUsersModal()">닫기</button>
+        </div>
+    </div>
+</div>
+
 <!-- ── 커스텀 역할 수정 모달 ── -->
 <div id="role-edit-modal" class="modal-overlay" onclick="if(event.target===this)closeRoleEditModal()">
     <div class="modal-box" style="width:480px;">
@@ -1165,6 +1243,10 @@
 </div>
 
 <script th:inline="javascript">
+    /* CSRF 토큰 — AJAX POST 요청에 사용 */
+    const csrfParamName = /*[[${_csrf.parameterName}]]*/ '_csrf';
+    const csrfTokenValue = /*[[${_csrf.token}]]*/ '';
+
     /* 현재 사용 중인 정렬 순서 목록 (Thymeleaf에서 주입) */
     const usedSortOrders = /*[[${categories.![sortOrder]}]]*/ [];
 
@@ -1300,6 +1382,102 @@
         document.getElementById('role-edit-modal').classList.remove('open');
     }
 
+    /* ── 역할 할당 회원 관리 모달 ── */
+
+    /** 현재 열려있는 역할 사용자 모달의 roleId (역할 해제 후 목록 재조회용) */
+    let currentRoleUsersModalId = null;
+
+    /**
+     * 역할에 할당된 회원 목록 모달 오픈
+     * @param {number} roleId   - 커스텀 역할 ID
+     * @param {string} roleName - 커스텀 역할명 (모달 제목 표시용)
+     */
+    async function openRoleUsersModal(roleId, roleName) {
+        currentRoleUsersModalId = roleId;
+        document.getElementById('role-users-modal-title').textContent = '🎭 ' + roleName + ' 역할 할당 회원';
+        document.getElementById('role-users-modal').classList.add('open');
+        await loadRoleUsers(roleId);
+    }
+
+    function closeRoleUsersModal() {
+        document.getElementById('role-users-modal').classList.remove('open');
+        currentRoleUsersModalId = null;
+    }
+
+    /** 역할에 할당된 회원 목록 AJAX 조회 후 렌더링 */
+    async function loadRoleUsers(roleId) {
+        const listEl = document.getElementById('role-users-list');
+        listEl.innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px;">불러오는 중...</div>';
+
+        try {
+            const res = await fetch('/admin/roles/' + roleId + '/users');
+            const data = await res.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px;">할당된 회원이 없습니다.</div>';
+                return;
+            }
+
+            listEl.innerHTML = data.map(u => `
+                <div id="role-user-row-${u.id}"
+                     style="display:flex;align-items:center;justify-content:space-between;
+                            padding:10px 14px;border-bottom:1px solid #f1f5f9;">
+                    <div>
+                        <span style="font-size:14px;font-weight:600;color:#1e1b4b;">${u.username}</span>
+                        <span style="font-size:12px;color:#9ca3af;margin-left:8px;">${u.email}</span>
+                    </div>
+                    <button class="btn btn-delete" style="font-size:12px;padding:4px 10px;"
+                            onclick="unassignRoleFromUser(${roleId}, ${u.id})">
+                        해제
+                    </button>
+                </div>
+            `).join('');
+        } catch (e) {
+            listEl.innerHTML = '<div style="text-align:center;padding:24px;color:#dc2626;font-size:13px;">목록을 불러오지 못했습니다.</div>';
+        }
+    }
+
+    /** 특정 회원에서 역할 해제 */
+    async function unassignRoleFromUser(roleId, userId) {
+        if (!confirm('이 회원의 역할을 해제하시겠습니까?')) return;
+
+        try {
+            const form = new URLSearchParams();
+            form.append(csrfParamName, csrfTokenValue);
+
+            const res = await fetch('/admin/roles/' + roleId + '/unassign/' + userId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: form
+            });
+            const data = await res.json();
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            // 해당 행만 제거
+            const row = document.getElementById('role-user-row-' + userId);
+            if (row) row.remove();
+
+            // 남은 회원 없으면 안내 문구 표시
+            const listEl = document.getElementById('role-users-list');
+            if (listEl.children.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px;">할당된 회원이 없습니다.</div>';
+            }
+
+            // 테이블·카드의 회원 수 배지 업데이트 (onclick 속성에 roleId가 포함된 버튼 탐색)
+            document.querySelectorAll('button[onclick]').forEach(btn => {
+                if (btn.getAttribute('onclick').includes('openRoleUsersModal(' + roleId + ',')) {
+                    const span = btn.querySelector('span');
+                    if (span) span.textContent = Math.max(0, parseInt(span.textContent) - 1);
+                }
+            });
+        } catch (e) {
+            alert('역할 해제 중 오류가 발생했습니다.');
+        }
+    }
+
     /* ESC 키로 모달 닫기 */
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -1307,6 +1485,7 @@
             closeNoticeEditModal();
             closeRoleEditModal();
             closeUserRoleModal();
+            closeRoleUsersModal();
         }
     });
 

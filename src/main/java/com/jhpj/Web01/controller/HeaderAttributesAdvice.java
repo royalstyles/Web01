@@ -13,10 +13,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
  * 기존에 각 컨트롤러마다 중복되어 있던 addHeaderAttributes() 를 하나로 통합
  *
  * 주입 속성:
- *   - isLoggedIn    : 로그인 여부
- *   - username      : 사용자명 (로그인 시)
- *   - isAdmin       : 관리자 여부 (ROLE_ADMIN)
- *   - profileImage  : 프로필 이미지 URL (로그인 시)
+ *   - isLoggedIn         : 로그인 여부
+ *   - username           : 사용자명 (로그인 시)
+ *   - isAdmin            : 관리자 여부 (ROLE_ADMIN)
+ *   - hasManagePermission: 관리 패널 접근 가능 여부 (공지·카테고리 관리 권한 보유 시 true)
+ *   - profileImage       : 프로필 이미지 URL (로그인 시)
  */
 @ControllerAdvice
 @RequiredArgsConstructor
@@ -30,9 +31,15 @@ public class HeaderAttributesAdvice {
             // 로그인 상태: 사용자 정보 및 권한 주입
             boolean isAdmin = userDetails.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            model.addAttribute("isLoggedIn",    true);
-            model.addAttribute("username",       userDetails.getUsername());
-            model.addAttribute("isAdmin",        isAdmin);
+            // 관리자가 아니더라도 공지·카테고리 관리 권한이 있으면 관리 패널 접근 허용
+            boolean hasManagePermission = isAdmin || userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("PERM_NOTICE_WRITE")
+                                || a.getAuthority().equals("PERM_NOTICE_DELETE")
+                                || a.getAuthority().equals("PERM_CATEGORY_MANAGE"));
+            model.addAttribute("isLoggedIn",          true);
+            model.addAttribute("username",             userDetails.getUsername());
+            model.addAttribute("isAdmin",              isAdmin);
+            model.addAttribute("hasManagePermission",  hasManagePermission);
             // 프로필 이미지는 DB 조회가 필요하므로 Optional 처리
             userRepository.findByUsername(userDetails.getUsername())
                     .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));

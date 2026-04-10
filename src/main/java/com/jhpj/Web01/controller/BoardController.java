@@ -129,11 +129,23 @@ public class BoardController {
             boolean isAuthor = post.getAuthor().getUsername().equals(userDetails.getUsername());
             boolean isAdmin  = userDetails.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            model.addAttribute("canEdit", isAuthor || isAdmin);
+            // POST_DELETE_OTHERS 커스텀 권한 보유 여부 확인
+            boolean canDeleteOthersPost = userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("PERM_POST_DELETE_OTHERS"));
+            // COMMENT_DELETE_OTHERS 커스텀 권한 보유 여부 확인
+            boolean canDeleteOthersComments = isAdmin || userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("PERM_COMMENT_DELETE_OTHERS"));
+
+            // 수정은 작성자·관리자만, 삭제는 커스텀 권한자도 허용
+            model.addAttribute("canEdit",   isAuthor || isAdmin);
+            model.addAttribute("canDelete", isAuthor || isAdmin || canDeleteOthersPost);
+            model.addAttribute("canDeleteOthersComments", canDeleteOthersComments);
         } else {
-            model.addAttribute("liked",           false);
-            model.addAttribute("currentUsername", "");
-            model.addAttribute("canEdit",         false);
+            model.addAttribute("liked",                   false);
+            model.addAttribute("currentUsername",         "");
+            model.addAttribute("canEdit",                 false);
+            model.addAttribute("canDelete",               false);
+            model.addAttribute("canDeleteOthersComments", false);
         }
 
         return "board/board-view";

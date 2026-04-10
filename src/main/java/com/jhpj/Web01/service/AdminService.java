@@ -17,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -293,6 +295,37 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<CustomRole> findAllCustomRoles() {
         return customRoleRepository.findAllByOrderByCreatedAtAsc();
+    }
+
+    /** 역할 ID → 할당 회원 수 맵 (대시보드 통계 표시용) */
+    @Transactional(readOnly = true)
+    public Map<Long, Long> getRoleUserCountMap() {
+        Map<Long, Long> countMap = new HashMap<>();
+        customRoleRepository.findAllByOrderByCreatedAtAsc()
+                .forEach(cr -> countMap.put(cr.getId(),
+                        userRepository.countByCustomRoles_Id(cr.getId())));
+        return countMap;
+    }
+
+    /** 특정 커스텀 역할에 할당된 회원 목록 */
+    @Transactional(readOnly = true)
+    public List<User> getUsersByCustomRoleId(Long roleId) {
+        if (!customRoleRepository.existsById(roleId)) {
+            throw new IllegalArgumentException("역할을 찾을 수 없습니다.");
+        }
+        return userRepository.findByCustomRoles_Id(roleId);
+    }
+
+    /**
+     * 특정 회원에서 특정 커스텀 역할만 해제
+     * @param userId  대상 회원 ID
+     * @param roleId  해제할 역할 ID
+     */
+    @Transactional
+    public void unassignCustomRole(Long userId, Long roleId) {
+        User user = findUser(userId);
+        user.getCustomRoles().removeIf(r -> r.getId().equals(roleId));
+        userRepository.save(user);
     }
 
     // ── 커스텀 역할 추가 ───────────────────────────────────────
