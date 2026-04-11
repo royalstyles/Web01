@@ -33,7 +33,10 @@ public enum Permission {
     USER_VERIFY_MANAGE("이메일 인증 처리"),
 
     /** 커스텀 역할 목록 및 할당 회원 조회 가능 — /admin/roles/* users GET 접근 허용 */
-    CUSTOM_ROLE_VIEW("커스텀 역할 목록 조회");
+    CUSTOM_ROLE_VIEW("커스텀 역할 목록 조회"),
+
+    /** 유저 패널의 로또 조합기 버튼 표시 여부 — 이 권한이 없으면 버튼이 숨겨짐 */
+    LOTTO_ACCESS("로또 생성기");
 
     /** 관리자 화면에 표시될 한국어 이름 */
     private final String displayName;

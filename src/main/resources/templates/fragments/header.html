@@ -611,6 +611,172 @@
                 font-size: 13px;
                 color: #9ca3af;
             }
+
+            /* ── 로또 조합기 모달 오버레이 ── */
+            .lotto-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, .5);
+                z-index: 9999;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(4px);
+            }
+            .lotto-overlay.open { display: flex; }
+
+            /* 모달 컨테이너 */
+            .lotto-modal {
+                background: white;
+                border-radius: 20px;
+                padding: 28px 28px 24px;
+                width: min(480px, calc(100vw - 32px));
+                box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+                position: relative;
+                animation: lottoSlideUp .22s ease;
+            }
+
+            @keyframes lottoSlideUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+
+            [data-theme="dark"] .lotto-modal {
+                background: #1e1b4b;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+            }
+
+            /* 모달 헤더 */
+            .lotto-modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 6px;
+            }
+            .lotto-modal-title {
+                font-size: 18px;
+                font-weight: 700;
+                color: #1e1b4b;
+            }
+            [data-theme="dark"] .lotto-modal-title { color: #e0e7ff; }
+
+            .lotto-close-btn {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                border: none;
+                background: #f1f5f9;
+                color: #6b7280;
+                font-size: 16px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background .15s;
+                line-height: 1;
+            }
+            .lotto-close-btn:hover { background: #e2e8f0; color: #374151; }
+            [data-theme="dark"] .lotto-close-btn {
+                background: rgba(255,255,255,.1);
+                color: #c7d2fe;
+            }
+            [data-theme="dark"] .lotto-close-btn:hover {
+                background: rgba(255,255,255,.18);
+                color: #e0e7ff;
+            }
+
+            .lotto-modal-subtitle {
+                font-size: 12px;
+                color: #9ca3af;
+                margin-bottom: 20px;
+            }
+
+            /* 조합 목록 영역 */
+            .lotto-sets {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            /* 단일 조합 행 */
+            .lotto-set-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .lotto-set-label {
+                font-size: 12px;
+                font-weight: 700;
+                color: #9ca3af;
+                width: 28px;
+                flex-shrink: 0;
+            }
+            .lotto-balls {
+                display: flex;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            /* 로또 볼 */
+            .lotto-ball {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                font-weight: 700;
+                color: white;
+                box-shadow: inset 0 -3px 6px rgba(0,0,0,.2), 0 2px 6px rgba(0,0,0,.15);
+                flex-shrink: 0;
+                transition: transform .15s;
+                animation: ballPop .3s ease both;
+            }
+            .lotto-ball:hover { transform: scale(1.1); }
+
+            @keyframes ballPop {
+                from { opacity: 0; transform: scale(.5); }
+                to   { opacity: 1; transform: scale(1); }
+            }
+
+            /* 한국 로또 공식 색상 */
+            .ball-yellow { background: linear-gradient(135deg, #f59e0b, #d97706); }  /* 1~10  */
+            .ball-blue   { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }  /* 11~20 */
+            .ball-red    { background: linear-gradient(135deg, #ef4444, #b91c1c); }  /* 21~30 */
+            .ball-gray   { background: linear-gradient(135deg, #6b7280, #374151); }  /* 31~40 */
+            .ball-green  { background: linear-gradient(135deg, #22c55e, #15803d); }  /* 41~45 */
+
+            /* 버튼 영역 */
+            .lotto-btn-row {
+                display: flex;
+                gap: 8px;
+            }
+            .lotto-gen-btn {
+                flex: 1;
+                padding: 11px;
+                border: none;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: opacity .15s, transform .1s;
+                font-family: inherit;
+            }
+            .lotto-gen-btn:hover { opacity: .88; transform: translateY(-1px); }
+            .lotto-gen-btn:active { transform: translateY(0); }
+            .lotto-gen-btn-primary { background: #4f46e5; color: white; }
+            .lotto-gen-btn-secondary {
+                background: #f1f5f9;
+                color: #374151;
+                border: 1px solid #e2e8f0;
+            }
+            [data-theme="dark"] .lotto-gen-btn-secondary {
+                background: rgba(255,255,255,.08);
+                color: #c7d2fe;
+                border-color: rgba(255,255,255,.12);
+            }
         </style>
     </th:block>
 </head>
@@ -672,6 +838,9 @@
 
             <!-- 내 작성글 -->
             <a th:href="@{/my-posts}" class="usp-btn">📝 내 작성글</a>
+
+            <!-- 로또 조합기 버튼 (LOTTO_ACCESS 권한 보유 또는 관리자에게만 표시) -->
+            <button th:if="${hasLottoPermission}" class="usp-btn" onclick="openLottoModal()" type="button">🎰 로또 조합기</button>
 
             <!-- 알림 버튼 + 드롭다운 -->
             <div class="usp-notif-wrap">
@@ -758,6 +927,7 @@
         <th:block th:if="${isLoggedIn}">
             <a th:href="@{/my-posts}" class="mobile-menu-item">📝 내 작성글</a>
             <a th:href="@{/profile/verify}" class="mobile-menu-item">⚙️ 프로필 설정</a>
+            <button th:if="${hasLottoPermission}" type="button" class="mobile-menu-item" onclick="openLottoModal(); closeMobileMenu();">🎰 로또 조합기</button>
             <a th:if="${isAdmin}" th:href="@{/admin}" class="mobile-menu-item">👑 관리자</a>
             <a th:if="${!isAdmin and hasManagePermission}" th:href="@{/admin}" class="mobile-menu-item">⚙️ 관리 패널</a>
             <form th:action="@{/auth/logout}" method="post" style="width:100%;">
@@ -773,7 +943,30 @@
         </th:block>
     </nav>
 </header>
-<!-- ↑ </header> 닫힘, ↓ 알림 JS (th:block 프래그먼트 범위 안에 포함) -->
+<!-- ↑ </header> 닫힘, ↓ 로또 조합기 모달 (LOTTO_ACCESS 권한 보유 또는 관리자에게만 렌더링) -->
+<th:block th:if="${hasLottoPermission}">
+<div class="lotto-overlay" id="lottoOverlay" onclick="onLottoOverlayClick(event)">
+    <div class="lotto-modal" id="lottoModal">
+        <!-- 모달 헤더 -->
+        <div class="lotto-modal-header">
+            <span class="lotto-modal-title">🎰 로또 조합기</span>
+            <button class="lotto-close-btn" onclick="closeLottoModal()" title="닫기">✕</button>
+        </div>
+        <div class="lotto-modal-subtitle">1~45에서 6개 번호를 무작위로 추출합니다</div>
+
+        <!-- 조합 목록 (JS로 동적 생성) -->
+        <div class="lotto-sets" id="lottoSets"></div>
+
+        <!-- 버튼 행 -->
+        <div class="lotto-btn-row">
+            <button class="lotto-gen-btn lotto-gen-btn-primary" onclick="generateLotto()">🎲 다시 뽑기</button>
+            <button class="lotto-gen-btn lotto-gen-btn-secondary" onclick="addLottoSet()">➕ 1줄 추가</button>
+        </div>
+    </div>
+</div>
+</th:block>
+
+<!-- ↑ 로또 모달 닫힘, ↓ 알림 JS (th:block 프래그먼트 범위 안에 포함) -->
 <script>
     // ── 모바일 햄버거 메뉴 ────────────────────────────────────
     window.toggleMobileMenu = function () {
@@ -992,7 +1185,7 @@
             return {};
         }
 
-        // XSS 방지용 HTML 이스케이프
+        // XSS 방지용 HTML 이스케이프 (로또 모달에서도 공유)
         function escapeHtml(str) {
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -1000,6 +1193,114 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;');
         }
+    })();
+
+    // ── 로또 조합기 ────────────────────────────────────────────
+    (function () {
+        // 현재 조합 수 (1~5줄)
+        var lottoSetCount = 1;
+        // 최대 조합 줄 수
+        var MAX_SETS = 5;
+
+        /**
+         * 1~45 사이 중복 없는 6개 번호를 오름차순으로 반환
+         */
+        function pickNumbers() {
+            var pool = [];
+            for (var i = 1; i <= 45; i++) pool.push(i);
+            // Fisher-Yates 셔플 후 앞 6개 추출
+            for (var j = pool.length - 1; j > 0; j--) {
+                var k = Math.floor(Math.random() * (j + 1));
+                var tmp = pool[j]; pool[j] = pool[k]; pool[k] = tmp;
+            }
+            return pool.slice(0, 6).sort(function (a, b) { return a - b; });
+        }
+
+        /**
+         * 번호에 따른 공식 로또 볼 색상 클래스 반환
+         * 1~10: yellow, 11~20: blue, 21~30: red, 31~40: gray, 41~45: green
+         */
+        function ballColorClass(n) {
+            if (n <= 10) return 'ball-yellow';
+            if (n <= 20) return 'ball-blue';
+            if (n <= 30) return 'ball-red';
+            if (n <= 40) return 'ball-gray';
+            return 'ball-green';
+        }
+
+        /**
+         * 단일 조합 행 HTML 문자열 생성
+         */
+        function buildSetRowHtml(index, numbers) {
+            var ballsHtml = numbers.map(function (n) {
+                return '<div class="lotto-ball ' + ballColorClass(n) + '" '
+                    + 'style="animation-delay:' + (numbers.indexOf(n) * 0.06) + 's">'
+                    + n + '</div>';
+            }).join('');
+            return '<div class="lotto-set-row">'
+                + '<span class="lotto-set-label">' + index + '번</span>'
+                + '<div class="lotto-balls">' + ballsHtml + '</div>'
+                + '</div>';
+        }
+
+        /**
+         * 전체 조합 다시 생성
+         */
+        window.generateLotto = function () {
+            var container = document.getElementById('lottoSets');
+            if (!container) return;
+            var html = '';
+            for (var i = 1; i <= lottoSetCount; i++) {
+                html += buildSetRowHtml(i, pickNumbers());
+            }
+            container.innerHTML = html;
+        };
+
+        /**
+         * 조합 1줄 추가 (최대 5줄)
+         */
+        window.addLottoSet = function () {
+            if (lottoSetCount >= MAX_SETS) return;
+            lottoSetCount++;
+            generateLotto();
+        };
+
+        /**
+         * 모달 열기 — 처음 열 때 번호 자동 생성
+         */
+        window.openLottoModal = function () {
+            var overlay = document.getElementById('lottoOverlay');
+            if (!overlay) return;
+            lottoSetCount = 1;
+            generateLotto();
+            overlay.classList.add('open');
+            // 스크롤 잠금
+            document.body.style.overflow = 'hidden';
+        };
+
+        /**
+         * 모달 닫기
+         */
+        window.closeLottoModal = function () {
+            var overlay = document.getElementById('lottoOverlay');
+            if (!overlay) return;
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+        };
+
+        /**
+         * 오버레이 배경 클릭 시 닫기 (모달 내부 클릭은 무시)
+         */
+        window.onLottoOverlayClick = function (e) {
+            if (e.target === document.getElementById('lottoOverlay')) {
+                closeLottoModal();
+            }
+        };
+
+        // ESC 키로 닫기
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeLottoModal();
+        });
     })();
 </script>
 

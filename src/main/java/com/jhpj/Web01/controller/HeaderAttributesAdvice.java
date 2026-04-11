@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
  *   - username           : 사용자명 (로그인 시)
  *   - isAdmin            : 관리자 여부 (ROLE_ADMIN)
  *   - hasManagePermission: 관리 패널 접근 가능 여부 (공지·카테고리 관리 권한 보유 시 true)
+ *   - hasLottoPermission : 로또 조합기 버튼 표시 여부 (관리자 또는 LOTTO_ACCESS 권한 보유 시 true)
  *   - profileImage       : 프로필 이미지 URL (로그인 시)
  */
 @ControllerAdvice
@@ -35,10 +36,13 @@ public class HeaderAttributesAdvice {
             boolean hasManagePermission = isAdmin || AuthorityUtils.hasAnyAuthority(userDetails,
                     "PERM_NOTICE_WRITE", "PERM_NOTICE_DELETE", "PERM_CATEGORY_MANAGE",
                     "PERM_USER_LOCK_MANAGE", "PERM_USER_VERIFY_MANAGE", "PERM_CUSTOM_ROLE_VIEW");
+            // 관리자이거나 LOTTO_ACCESS 권한이 있으면 로또 조합기 버튼 표시
+            boolean hasLottoPermission = isAdmin || AuthorityUtils.hasAuthority(userDetails, "PERM_LOTTO_ACCESS");
             model.addAttribute("isLoggedIn",          true);
             model.addAttribute("username",             userDetails.getUsername());
             model.addAttribute("isAdmin",              isAdmin);
             model.addAttribute("hasManagePermission",  hasManagePermission);
+            model.addAttribute("hasLottoPermission",   hasLottoPermission);
             // 프로필 이미지는 DB 조회가 필요하므로 Optional 처리
             userRepository.findByUsername(userDetails.getUsername())
                     .ifPresent(u -> model.addAttribute("profileImage", u.getProfileImage()));
