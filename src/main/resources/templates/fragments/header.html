@@ -234,16 +234,17 @@
             }
             .mobile-menu-item-logout:hover { background: rgba(220,38,38,.4); }
 
-            @media (max-width: 640px) {
+            /* 900px 이하: 폴드폰 펼친 화면(≈884px), 소형 태블릿, 모바일 모두 햄버거 메뉴 적용 */
+            @media (max-width: 900px) {
                 .site-header {
                     padding: 0 16px;
-                    position: sticky; /* 모바일에서도 sticky 유지 */
+                    position: sticky;
                 }
 
                 .header-user-info { display: none; }
                 .header-board-name { font-size: 14px; }
 
-                /* 모바일에서 기존 텍스트 버튼 전체 숨김 */
+                /* 텍스트 버튼 전체 숨김 */
                 .header-right .header-btn,
                 .header-right .header-user-chip,
                 .header-right form { display: none !important; }
@@ -414,8 +415,8 @@
                 color: #fecaca;
             }
 
-            /* 모바일에서는 항상 숨김 (JS 위치 계산 불필요) */
-            @media (max-width: 768px) {
+            /* 900px 이하에서는 유저 패널 숨김 (햄버거 메뉴로 대체) */
+            @media (max-width: 900px) {
                 .user-side-panel {
                     display: none !important;
                 }
